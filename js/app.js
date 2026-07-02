@@ -56,6 +56,84 @@ function renderTodo() {
   renderDashboard();
   renderRespuestas();
   renderLocalesNuevos();
+  renderReporte();
+  renderMetricas();
+}
+
+function pct(v) {
+  return v === null || v === undefined ? "—" : (v * 100).toFixed(1) + "%";
+}
+
+function claseCumpl(v) {
+  if (v === null || v === undefined) return "";
+  if (v >= 0.9) return "ok";
+  if (v >= 0.7) return "";
+  return "no";
+}
+
+function renderReporte() {
+  const cont = document.getElementById("tablaReporte");
+  if (!cont) return;
+  const locales = State.getLocales();
+  const calendario = State.getCalendario();
+  const filas = calcularReporte(locales, calendario, RESULTADOS);
+  const marcaFiltro = document.getElementById("filtroMarcaReporte")?.value || "";
+  const filtradas = filas.filter((f) => !marcaFiltro || f.local.marca === marcaFiltro);
+
+  const mesNombre = filtradas[0]?.mesActualNombre || "";
+  let html = `<table><thead><tr><th>Código</th><th>Provincia</th><th>Responsable</th><th class="local">Sucursal</th><th>Controles enviados</th><th>% Cumpl semanal</th><th>% ${mesNombre}</th><th>% Cumpl acumulado anual</th></tr></thead><tbody>`;
+  filtradas
+    .slice()
+    .sort((a, b) => (a.pctAnual ?? 1) - (b.pctAnual ?? 1))
+    .forEach((f) => {
+      html += `<tr>
+        <td>${f.local.codigo}</td>
+        <td>${f.local.provincia || ""}</td>
+        <td>${f.local.responsable || ""}</td>
+        <td class="local">${f.local.nombre}</td>
+        <td>${f.controlesEnviados} / ${f.totalSemana}</td>
+        <td class="${claseCumpl(f.pctSemanal)}">${pct(f.pctSemanal)}</td>
+        <td class="${claseCumpl(f.pctMesActual)}">${pct(f.pctMesActual)}</td>
+        <td class="${claseCumpl(f.pctAnual)}">${pct(f.pctAnual)}</td>
+      </tr>`;
+    });
+  html += "</tbody></table>";
+  cont.innerHTML = html;
+}
+
+function renderMetricas() {
+  const cont = document.getElementById("tablaMetricas");
+  if (!cont) return;
+  const locales = State.getLocales();
+  const calendario = State.getCalendario();
+  const diasOrdenados = [...new Set(calendario.map((c) => Number(c.dia_semana)))].sort((a, b) => a - b);
+  const filas = calcularMetricas(locales, calendario, RESULTADOS);
+  const marcaFiltro = document.getElementById("filtroMarcaMetricas")?.value || "";
+  const filtradas = filas.filter((f) => !marcaFiltro || f.local.marca === marcaFiltro);
+
+  const mesActual = new Date().getUTCMonth();
+
+  let html = `<table><thead><tr><th>Código</th><th class="local">Sucursal</th>`;
+  diasOrdenados.forEach((d) => (html += `<th>${diaLabel(d)}</th>`));
+  html += `<th>% Cumpl gral</th>`;
+  MESES.forEach((m, i) => (html += `<th${i === mesActual ? ' style="background:#eef1f4"' : ""}>${m.slice(0, 3)}</th>`));
+  html += "</tr></thead><tbody>";
+  filtradas
+    .slice()
+    .sort((a, b) => (a.cumplGral ?? 1) - (b.cumplGral ?? 1))
+    .forEach((f) => {
+      html += `<tr><td>${f.local.codigo}</td><td class="local">${f.local.nombre}</td>`;
+      diasOrdenados.forEach((d) => {
+        html += `<td class="${claseCumpl(f.porDia[d])}">${pct(f.porDia[d])}</td>`;
+      });
+      html += `<td class="${claseCumpl(f.cumplGral)}">${pct(f.cumplGral)}</td>`;
+      f.porMes.forEach((v, i) => {
+        html += `<td class="${claseCumpl(v)}"${i === mesActual ? ' style="background:#eef1f4"' : ""}>${pct(v)}</td>`;
+      });
+      html += "</tr>";
+    });
+  html += "</tbody></table>";
+  cont.innerHTML = html;
 }
 
 function renderResumen() {
@@ -183,13 +261,14 @@ function renderRespuestas() {
 function renderLocales() {
   const locales = State.getLocales();
   let html =
-    "<table><thead><tr><th>Código</th><th>Marca</th><th>Nombre</th><th>Provincia</th><th>Email local</th><th>Email referente</th><th>Activo</th><th></th></tr></thead><tbody>";
+    "<table><thead><tr><th>Código</th><th>Marca</th><th>Nombre</th><th>Provincia</th><th>Responsable</th><th>Email local</th><th>Email referente</th><th>Activo</th><th></th></tr></thead><tbody>";
   locales.forEach((l, i) => {
     html += `<tr>
       <td><input data-i="${i}" data-f="codigo" value="${l.codigo || ""}"></td>
       <td><input data-i="${i}" data-f="marca" value="${l.marca || ""}"></td>
       <td><input data-i="${i}" data-f="nombre" value="${(l.nombre || "").replace(/"/g, "&quot;")}"></td>
       <td><input data-i="${i}" data-f="provincia" value="${l.provincia || ""}"></td>
+      <td><input data-i="${i}" data-f="responsable" value="${(l.responsable || "").replace(/"/g, "&quot;")}"></td>
       <td><input data-i="${i}" data-f="emailLocal" value="${(l.emailLocal || "").replace(/"/g, "&quot;")}"></td>
       <td><input data-i="${i}" data-f="emailReferente" value="${(l.emailReferente || "").replace(/"/g, "&quot;")}"></td>
       <td><input type="checkbox" data-i="${i}" data-f="activo" ${l.activo !== false ? "checked" : ""}></td>
@@ -220,7 +299,10 @@ function renderLocales() {
 
 function agregarLocalManual() {
   const locales = State.getLocales();
-  locales.push({ codigo: "", marca: "", nombre: "", provincia: "", emailLocal: "", emailReferente: "", activo: true });
+  locales.push({
+    codigo: "", marca: "", nombre: "", provincia: "", responsable: "",
+    emailLocal: "", emailReferente: "", activo: true,
+  });
   State.setLocales(locales);
   renderLocales();
 }
@@ -289,18 +371,29 @@ function importarLocalesSeed() {
   try {
     const seed = LOCALES_SEED || [];
     const locales = State.getLocales();
-    const existentes = new Set(locales.map((l) => l.codigo));
+    const porCodigo = new Map(locales.map((l) => [l.codigo, l]));
     let agregados = 0;
+    let actualizados = 0;
     seed.forEach((l) => {
-      if (!existentes.has(l.codigo)) {
+      const existente = porCodigo.get(l.codigo);
+      if (!existente) {
         locales.push(l);
         agregados++;
+        return;
       }
+      let cambio = false;
+      ["provincia", "responsable"].forEach((campo) => {
+        if (!existente[campo] && l[campo]) {
+          existente[campo] = l[campo];
+          cambio = true;
+        }
+      });
+      if (cambio) actualizados++;
     });
     State.setLocales(locales);
     renderLocales();
     if (RESULTADOS.length) renderLocalesNuevos();
-    estadoEl.textContent = `${agregados} locales agregados (${seed.length - agregados} ya existían).`;
+    estadoEl.textContent = `${agregados} locales agregados, ${actualizados} actualizados (provincia/responsable), ${seed.length - agregados - actualizados} sin cambios.`;
   } catch (err) {
     estadoEl.textContent = "Error al importar: " + err.message;
   }
@@ -391,6 +484,8 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnAgregarLocal").addEventListener("click", agregarLocalManual);
   document.getElementById("guardarCalendarioBtn").addEventListener("click", guardarCalendario);
   document.getElementById("btnImportarSeed").addEventListener("click", importarLocalesSeed);
+  document.getElementById("filtroMarcaReporte").addEventListener("change", renderReporte);
+  document.getElementById("filtroMarcaMetricas").addEventListener("change", renderMetricas);
 
   if (State.getFuentes().length) fetchYProcesar();
 });
