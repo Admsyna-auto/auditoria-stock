@@ -44,6 +44,17 @@ function construirOkSet(resultados) {
 }
 
 /**
+ * Determina qué calendario (tipos esperados por día) aplica a un local,
+ * según a qué fuente (Form) pertenece su marca. Si no matchea ninguna,
+ * usa la primera fuente como respaldo.
+ */
+function calendarioParaLocal(local, fuentes) {
+  if (!fuentes || !fuentes.length) return [];
+  const match = fuentes.find((f) => (f.marcas || []).includes(local.marca));
+  return (match || fuentes[0]).calendario || [];
+}
+
+/**
  * Cuenta cumplimiento de un local entre dos fechas (inclusive), sólo en los
  * días de la semana que tienen control esperado según el calendario.
  * diaFiltro: si se pasa, sólo cuenta ese día de la semana (1-7).
@@ -65,15 +76,15 @@ function calcularCumplimiento(localCodigo, okSet, desdeKey, hastaKey, diasConCon
 /**
  * Reporte general por sucursal: semana actual, mes actual, acumulado anual.
  */
-function calcularReporte(locales, calendario, resultados) {
+function calcularReporte(locales, fuentes, resultados) {
   const okSet = construirOkSet(resultados);
-  const diasConControl = new Set(calendario.map((c) => Number(c.dia_semana)));
   const hoy = hoyKey();
   const desdeSemana = inicioSemana(hoy);
   const desdeMes = inicioMes(hoy);
   const desdeAnio = inicioAnio(hoy);
 
   return locales.map((local) => {
+    const diasConControl = new Set(calendarioParaLocal(local, fuentes).map((c) => Number(c.dia_semana)));
     const semana = calcularCumplimiento(local.codigo, okSet, desdeSemana, hoy, diasConControl);
     const mes = calcularCumplimiento(local.codigo, okSet, desdeMes, hoy, diasConControl);
     const anio = calcularCumplimiento(local.codigo, okSet, desdeAnio, hoy, diasConControl);
@@ -93,17 +104,18 @@ function calcularReporte(locales, calendario, resultados) {
  * Métricas por sucursal: % cumplimiento por día de la semana y por mes,
  * desde el inicio del año hasta hoy.
  */
-function calcularMetricas(locales, calendario, resultados) {
+function calcularMetricas(locales, fuentes, resultados) {
   const okSet = construirOkSet(resultados);
-  const diasConControl = new Set(calendario.map((c) => Number(c.dia_semana)));
-  const diasOrdenados = [...diasConControl].sort((a, b) => a - b);
   const hoy = hoyKey();
   const desdeAnio = inicioAnio(hoy);
 
   return locales.map((local) => {
+    const diasConControl = new Set(calendarioParaLocal(local, fuentes).map((c) => Number(c.dia_semana)));
     const porDia = {};
-    diasOrdenados.forEach((d) => {
-      porDia[d] = calcularCumplimiento(local.codigo, okSet, desdeAnio, hoy, diasConControl, d).pct;
+    [1, 2, 3, 4, 5, 6, 7].forEach((d) => {
+      porDia[d] = diasConControl.has(d)
+        ? calcularCumplimiento(local.codigo, okSet, desdeAnio, hoy, diasConControl, d).pct
+        : null;
     });
 
     const porMes = [];

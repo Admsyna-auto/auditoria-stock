@@ -33,26 +33,36 @@ function saveJSON(key, value) {
 }
 
 const State = {
-  // Lista de fuentes: [{ id, nombre, csvUrl }]. Migra automáticamente el
-  // link CSV único que usaban las versiones anteriores de la herramienta.
+  // Lista de fuentes: [{ id, nombre, csvUrl, marcas: [...], calendario: [{dia_semana, tipo_esperado}] }].
+  // Cada fuente (Form) tiene su propio calendario de tipos esperados, porque
+  // por ejemplo JBL usa controles distintos a RIIING/DIGGIT los mismos días.
+  // Migra automáticamente instalaciones previas (link CSV único, o fuentes
+  // sin calendario/marcas todavía).
   getFuentes: () => {
-    const fuentes = loadJSON(LS_KEYS.FUENTES, null);
-    if (fuentes) return fuentes;
-    const urlVieja = localStorage.getItem(LS_KEYS.CSV_URL);
-    if (urlVieja) {
-      const migradas = [{ id: "riiing-diggit", nombre: "RIIING / DIGGIT", csvUrl: urlVieja }];
-      saveJSON(LS_KEYS.FUENTES, migradas);
-      return migradas;
+    let fuentes = loadJSON(LS_KEYS.FUENTES, null);
+    if (!fuentes) {
+      const urlVieja = localStorage.getItem(LS_KEYS.CSV_URL);
+      fuentes = urlVieja ? [{ id: "riiing-diggit", nombre: "RIIING / DIGGIT", csvUrl: urlVieja }] : [];
     }
-    return [];
+    const calendarioViejo = loadJSON(LS_KEYS.CALENDARIO, null);
+    let cambio = false;
+    fuentes.forEach((f) => {
+      if (!f.calendario) {
+        f.calendario = calendarioViejo || DEFAULT_CALENDARIO;
+        cambio = true;
+      }
+      if (!f.marcas) {
+        f.marcas = [];
+        cambio = true;
+      }
+    });
+    if (cambio) saveJSON(LS_KEYS.FUENTES, fuentes);
+    return fuentes;
   },
   setFuentes: (fuentes) => saveJSON(LS_KEYS.FUENTES, fuentes),
 
   getLocales: () => loadJSON(LS_KEYS.LOCALES, []),
   setLocales: (locales) => saveJSON(LS_KEYS.LOCALES, locales),
-
-  getCalendario: () => loadJSON(LS_KEYS.CALENDARIO, DEFAULT_CALENDARIO),
-  setCalendario: (cal) => saveJSON(LS_KEYS.CALENDARIO, cal),
 
   getConfig: () => Object.assign({}, DEFAULT_CONFIG, loadJSON(LS_KEYS.CONFIG, {})),
   setConfig: (cfg) => saveJSON(LS_KEYS.CONFIG, cfg),

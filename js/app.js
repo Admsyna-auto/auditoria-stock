@@ -20,7 +20,6 @@ async function fetchYProcesar() {
   }
   estadoEl.textContent = "Descargando respuestas...";
   const locales = State.getLocales();
-  const calendario = State.getCalendario();
   const config = State.getConfig();
   const todas = [];
   const errores = [];
@@ -34,7 +33,7 @@ async function fetchYProcesar() {
       const text = await resp.text();
       const rows = csvToObjects(text);
       totalFilas += rows.length;
-      const resultados = procesarRespuestas(rows, locales, calendario, config).map((r) => ({
+      const resultados = procesarRespuestas(rows, locales, fuente.calendario || [], config).map((r) => ({
         ...r,
         fuenteNombre: fuente.nombre,
       }));
@@ -75,8 +74,8 @@ function renderReporte() {
   const cont = document.getElementById("tablaReporte");
   if (!cont) return;
   const locales = State.getLocales();
-  const calendario = State.getCalendario();
-  const filas = calcularReporte(locales, calendario, RESULTADOS);
+  const fuentes = State.getFuentes();
+  const filas = calcularReporte(locales, fuentes, RESULTADOS);
   const marcaFiltro = document.getElementById("filtroMarcaReporte")?.value || "";
   const filtradas = filas.filter((f) => !marcaFiltro || f.local.marca === marcaFiltro);
 
@@ -105,9 +104,11 @@ function renderMetricas() {
   const cont = document.getElementById("tablaMetricas");
   if (!cont) return;
   const locales = State.getLocales();
-  const calendario = State.getCalendario();
-  const diasOrdenados = [...new Set(calendario.map((c) => Number(c.dia_semana)))].sort((a, b) => a - b);
-  const filas = calcularMetricas(locales, calendario, RESULTADOS);
+  const fuentes = State.getFuentes();
+  const diasOrdenados = [
+    ...new Set(fuentes.flatMap((f) => (f.calendario || []).map((c) => Number(c.dia_semana)))),
+  ].sort((a, b) => a - b);
+  const filas = calcularMetricas(locales, fuentes, RESULTADOS);
   const marcaFiltro = document.getElementById("filtroMarcaMetricas")?.value || "";
   const filtradas = filas.filter((f) => !marcaFiltro || f.local.marca === marcaFiltro);
 
@@ -152,17 +153,25 @@ function fechaKeyToDate(fk) {
 }
 
 function poblarFiltroTipoDashboard() {
-  const calendario = State.getCalendario();
+  const fuentes = State.getFuentes();
+  const tiposPorDia = new Map(); // dia -> Set(tipos)
+  fuentes.forEach((f) => {
+    (f.calendario || []).forEach((c) => {
+      const dia = Number(c.dia_semana);
+      if (!tiposPorDia.has(dia)) tiposPorDia.set(dia, new Set());
+      tiposPorDia.get(dia).add(c.tipo_esperado);
+    });
+  });
+
   const sel = document.getElementById("filtroTipoDia");
   const valorActual = sel.value;
   sel.innerHTML = '<option value="">Todos</option>';
-  calendario
-    .slice()
-    .sort((a, b) => Number(a.dia_semana) - Number(b.dia_semana))
-    .forEach((c) => {
+  [...tiposPorDia.keys()]
+    .sort((a, b) => a - b)
+    .forEach((dia) => {
       const opt = document.createElement("option");
-      opt.value = String(c.dia_semana);
-      opt.textContent = `${diaLabel(Number(c.dia_semana))} — ${c.tipo_esperado}`;
+      opt.value = String(dia);
+      opt.textContent = `${diaLabel(dia)} — ${[...tiposPorDia.get(dia)].join(" / ")}`;
       sel.appendChild(opt);
     });
   if ([...sel.options].some((o) => o.value === valorActual)) sel.value = valorActual;
@@ -170,8 +179,7 @@ function poblarFiltroTipoDashboard() {
 
 function renderDashboard() {
   const locales = State.getLocales();
-  const calendario = State.getCalendario();
-  const diasConControl = new Set(calendario.map((c) => Number(c.dia_semana)));
+  const fuentes = State.getFuentes();
 
   const desdeInput = document.getElementById("desde").value;
   const hastaInput = document.getElementById("hasta").value;
@@ -203,6 +211,7 @@ function renderDashboard() {
   fechas.forEach((f) => (html += `<th>${f.slice(5)}</th>`));
   html += "</tr></thead><tbody>";
   localesFiltrados.forEach((local) => {
+    const diasConControl = new Set(calendarioParaLocal(local, fuentes).map((c) => Number(c.dia_semana)));
     html += `<tr><td class="local">${local.nombre}</td>`;
     fechas.forEach((fechaKey) => {
       const diaIso = fechaKeyToDate(fechaKey).getUTCDay() === 0 ? 7 : fechaKeyToDate(fechaKey).getUTCDay();
@@ -333,6 +342,7 @@ function renderLocalesNuevos() {
         marca: marcaDeNombre(nombre),
         nombre,
         provincia: "",
+        responsable: "",
         emailLocal: "",
         emailReferente: "",
         activo: true,
@@ -345,23 +355,49 @@ function renderLocalesNuevos() {
   });
 }
 
+function poblarSelectorFuenteCalendario() {
+  const fuentes = State.getFuentes();
+  const sel = document.getElementById("fuenteCalendario");
+  const valorActual = sel.value;
+  sel.innerHTML = "";
+  fuentes.forEach((f, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = f.nombre || `Fuente ${i + 1}`;
+    sel.appendChild(opt);
+  });
+  if (fuentes.some((_, i) => String(i) === valorActual)) sel.value = valorActual;
+}
+
 function renderCalendario() {
-  const cal = State.getCalendario();
+  poblarSelectorFuenteCalendario();
+  const fuentes = State.getFuentes();
+  const idx = Number(document.getElementById("fuenteCalendario").value || 0);
+  const fuente = fuentes[idx];
+  const cont = document.getElementById("tablaCalendario");
+  if (!fuente) {
+    cont.innerHTML = "<p>Agregá una fuente en la pestaña Config para poder definir su calendario.</p>";
+    return;
+  }
   const byDia = {};
-  cal.forEach((c) => (byDia[c.dia_semana] = c.tipo_esperado));
+  (fuente.calendario || []).forEach((c) => (byDia[c.dia_semana] = c.tipo_esperado));
   let html = "<table><thead><tr><th>Día</th><th>Tipo esperado</th></tr></thead><tbody>";
   for (let d = 1; d <= 7; d++) {
     html += `<tr><td>${diaLabel(d)}</td><td><input data-dia="${d}" value="${byDia[d] || ""}"></td></tr>`;
   }
   html += "</tbody></table>";
-  document.getElementById("tablaCalendario").innerHTML = html;
+  cont.innerHTML = html;
 }
 
 function guardarCalendario() {
+  const fuentes = State.getFuentes();
+  const idx = Number(document.getElementById("fuenteCalendario").value || 0);
+  if (!fuentes[idx]) return;
   const filas = Array.from(document.querySelectorAll("#tablaCalendario input[data-dia]"))
     .map((i) => ({ dia_semana: Number(i.dataset.dia), tipo_esperado: i.value.trim() }))
     .filter((f) => f.tipo_esperado);
-  State.setCalendario(filas);
+  fuentes[idx].calendario = filas;
+  State.setFuentes(fuentes);
   alert("Calendario guardado.");
   if (RESULTADOS.length) fetchYProcesar();
 }
@@ -412,11 +448,12 @@ function initTabs() {
 
 function renderFuentes() {
   const fuentes = State.getFuentes();
-  let html = "<table><thead><tr><th>Nombre</th><th>Link CSV</th><th></th></tr></thead><tbody>";
+  let html = "<table><thead><tr><th>Nombre</th><th>Link CSV</th><th>Marcas asociadas (separadas por coma)</th><th></th></tr></thead><tbody>";
   fuentes.forEach((f, i) => {
     html += `<tr>
       <td><input data-i="${i}" data-f="nombre" value="${(f.nombre || "").replace(/"/g, "&quot;")}"></td>
       <td><input data-i="${i}" data-f="csvUrl" value="${(f.csvUrl || "").replace(/"/g, "&quot;")}"></td>
+      <td><input data-i="${i}" data-f="marcas" placeholder="ej. RIIING, DIGGIT" value="${(f.marcas || []).join(", ")}"></td>
       <td><button data-del="${i}">Borrar</button></td>
     </tr>`;
   });
@@ -426,8 +463,14 @@ function renderFuentes() {
   document.querySelectorAll("#tablaFuentes input").forEach((inp) => {
     inp.addEventListener("change", () => {
       const fuentes = State.getFuentes();
-      fuentes[Number(inp.dataset.i)][inp.dataset.f] = inp.value.trim();
+      const campo = inp.dataset.f;
+      if (campo === "marcas") {
+        fuentes[Number(inp.dataset.i)].marcas = inp.value.split(",").map((m) => m.trim()).filter(Boolean);
+      } else {
+        fuentes[Number(inp.dataset.i)][campo] = inp.value.trim();
+      }
       State.setFuentes(fuentes);
+      poblarSelectorFuenteCalendario();
     });
   });
   document.querySelectorAll("#tablaFuentes button[data-del]").forEach((btn) => {
@@ -436,15 +479,17 @@ function renderFuentes() {
       fuentes.splice(Number(btn.dataset.del), 1);
       State.setFuentes(fuentes);
       renderFuentes();
+      renderCalendario();
     });
   });
 }
 
 function agregarFuente() {
   const fuentes = State.getFuentes();
-  fuentes.push({ id: "fuente-" + Date.now(), nombre: "", csvUrl: "" });
+  fuentes.push({ id: "fuente-" + Date.now(), nombre: "", csvUrl: "", marcas: [], calendario: [] });
   State.setFuentes(fuentes);
   renderFuentes();
+  renderCalendario();
 }
 
 function initConfig() {
@@ -483,6 +528,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("respHasta").addEventListener("change", renderRespuestas);
   document.getElementById("btnAgregarLocal").addEventListener("click", agregarLocalManual);
   document.getElementById("guardarCalendarioBtn").addEventListener("click", guardarCalendario);
+  document.getElementById("fuenteCalendario").addEventListener("change", renderCalendario);
   document.getElementById("btnImportarSeed").addEventListener("click", importarLocalesSeed);
   document.getElementById("filtroMarcaReporte").addEventListener("change", renderReporte);
   document.getElementById("filtroMarcaMetricas").addEventListener("change", renderMetricas);
