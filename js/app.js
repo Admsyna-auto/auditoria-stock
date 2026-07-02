@@ -672,10 +672,33 @@ function initConfig() {
     alert("Configuración guardada.");
     if (RESULTADOS.length) fetchYProcesar();
   });
+
+  document.getElementById("githubToken").value = State.getGithubToken();
+  document.getElementById("githubRepo").value = State.getGithubRepo();
+  document.getElementById("githubToken").addEventListener("change", (e) => State.setGithubToken(e.target.value.trim()));
+  document.getElementById("githubRepo").addEventListener("change", (e) => State.setGithubRepo(e.target.value.trim()));
+  document.getElementById("btnSincronizarGithub").addEventListener("click", async () => {
+    const ok = await sincronizarDesdeCompartido(true);
+    if (ok) {
+      renderLocales();
+      renderFuentes();
+      renderCalendario();
+      if (RESULTADOS.length) fetchYProcesar();
+    }
+  });
+  document.getElementById("btnGuardarGithub").addEventListener("click", guardarEnGithub);
+
+  const ultimaSync = State.getUltimaSync();
+  if (ultimaSync) document.getElementById("estadoSyncGithub").textContent = `Última sincronización: ${ultimaSync}.`;
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   initTabs();
+
+  if (State.getLocales().length === 0) {
+    await sincronizarDesdeCompartido(false);
+  }
+
   initConfig();
   renderLocales();
   renderCalendario();

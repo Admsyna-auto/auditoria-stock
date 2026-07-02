@@ -4,7 +4,12 @@ const LS_KEYS = {
   LOCALES: "as_locales",
   CALENDARIO: "as_calendario",
   CONFIG: "as_config",
+  GITHUB_TOKEN: "as_github_token",
+  GITHUB_REPO: "as_github_repo",
+  ULTIMA_SYNC: "as_ultima_sync",
 };
+
+const DEFAULT_GITHUB_REPO = "Admsyna-auto/auditoria-stock";
 
 const DEFAULT_CALENDARIO = [
   { dia_semana: 1, tipo_esperado: "Imei de equipos ( Notebook -Tablet- tv- play- joystick)" },
@@ -66,4 +71,16 @@ const State = {
 
   getConfig: () => Object.assign({}, DEFAULT_CONFIG, loadJSON(LS_KEYS.CONFIG, {})),
   setConfig: (cfg) => saveJSON(LS_KEYS.CONFIG, cfg),
+
+  // Token de GitHub (fine-grained, solo contents:write sobre este repo) para
+  // poder guardar Locales/Config compartidos directamente en git. Vive
+  // únicamente en este navegador, nunca se sube a ningún lado.
+  getGithubToken: () => localStorage.getItem(LS_KEYS.GITHUB_TOKEN) || "",
+  setGithubToken: (token) => localStorage.setItem(LS_KEYS.GITHUB_TOKEN, token),
+
+  getGithubRepo: () => localStorage.getItem(LS_KEYS.GITHUB_REPO) || DEFAULT_GITHUB_REPO,
+  setGithubRepo: (repo) => localStorage.setItem(LS_KEYS.GITHUB_REPO, repo),
+
+  getUltimaSync: () => localStorage.getItem(LS_KEYS.ULTIMA_SYNC) || "",
+  setUltimaSync: (fecha) => localStorage.setItem(LS_KEYS.ULTIMA_SYNC, fecha),
 };
