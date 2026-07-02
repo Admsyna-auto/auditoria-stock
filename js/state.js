@@ -1,5 +1,6 @@
 const LS_KEYS = {
   CSV_URL: "as_csv_url",
+  FUENTES: "as_fuentes",
   LOCALES: "as_locales",
   CALENDARIO: "as_calendario",
   CONFIG: "as_config",
@@ -32,8 +33,20 @@ function saveJSON(key, value) {
 }
 
 const State = {
-  getCsvUrl: () => localStorage.getItem(LS_KEYS.CSV_URL) || "",
-  setCsvUrl: (url) => localStorage.setItem(LS_KEYS.CSV_URL, url),
+  // Lista de fuentes: [{ id, nombre, csvUrl }]. Migra automáticamente el
+  // link CSV único que usaban las versiones anteriores de la herramienta.
+  getFuentes: () => {
+    const fuentes = loadJSON(LS_KEYS.FUENTES, null);
+    if (fuentes) return fuentes;
+    const urlVieja = localStorage.getItem(LS_KEYS.CSV_URL);
+    if (urlVieja) {
+      const migradas = [{ id: "riiing-diggit", nombre: "RIIING / DIGGIT", csvUrl: urlVieja }];
+      saveJSON(LS_KEYS.FUENTES, migradas);
+      return migradas;
+    }
+    return [];
+  },
+  setFuentes: (fuentes) => saveJSON(LS_KEYS.FUENTES, fuentes),
 
   getLocales: () => loadJSON(LS_KEYS.LOCALES, []),
   setLocales: (locales) => saveJSON(LS_KEYS.LOCALES, locales),

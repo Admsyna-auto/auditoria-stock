@@ -62,7 +62,11 @@
             <option value="">Todas</option>
             <option value="RIIING">RIIING</option>
             <option value="DIGGIT">DIGGIT</option>
+            <option value="JBL">JBL</option>
           </select>
+        </label>
+        <label>Tipo de control / día
+          <select id="filtroTipoDia"><option value="">Todos</option></select>
         </label>
         <button id="aplicarFiltrosDashboard">Aplicar</button>
       </div>
@@ -78,6 +82,8 @@
           <select id="filtroEstado"><option value="">Todos</option></select>
         </label>
         <label>Buscar sucursal <input type="text" id="filtroTexto" placeholder="ej. PARANA"></label>
+        <label>Desde <input type="date" id="respDesde"></label>
+        <label>Hasta <input type="date" id="respHasta"></label>
       </div>
       <div class="table-scroll" id="tablaRespuestas"></div>
     </section>
@@ -105,10 +111,11 @@
 
   <div class="tab-panel" id="tab-config">
     <section class="card">
-      <h2>Fuente de datos (CSV publicado del Form)</h2>
-      <p>Google Sheets → Archivo → Compartir → Publicar en la web → hoja "Respuestas de formulario 1" → formato CSV.</p>
-      <input type="url" id="csvUrl" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" style="width:100%">
-      <button id="guardarCsvUrl" style="margin-top:10px">Guardar y actualizar</button>
+      <h2>Fuentes de datos (CSV publicados de cada Form)</h2>
+      <p>Google Sheets → Archivo → Compartir → Publicar en la web → hoja de respuestas → formato CSV. Agregá una fuente por cada formulario (ej. "RIIING / DIGGIT" y "JBL") — se procesan y combinan todas juntas.</p>
+      <div id="tablaFuentes"></div>
+      <button id="btnAgregarFuente" class="secondary" style="margin-top:10px">+ Agregar fuente</button>
+      <button id="guardarFuentes" style="margin-top:10px">Guardar y actualizar</button>
       <div id="estadoCarga"></div>
     </section>
     <section class="card">

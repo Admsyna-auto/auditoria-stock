@@ -12,31 +12,47 @@ function marcaDeNombre(nombre) {
 }
 
 async function fetchYProcesar() {
-  const url = State.getCsvUrl();
+  const fuentes = State.getFuentes();
   const estadoEl = document.getElementById("estadoCarga");
-  if (!url) {
-    estadoEl.textContent = "Configurá primero el link CSV en la pestaña Config.";
+  if (!fuentes.length) {
+    estadoEl.textContent = "Configurá primero al menos una fuente (CSV) en la pestaña Config.";
     return;
   }
   estadoEl.textContent = "Descargando respuestas...";
-  try {
-    const resp = await fetch(url + (url.includes("?") ? "&" : "?") + "_=" + Date.now());
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    const text = await resp.text();
-    const rows = csvToObjects(text);
-    const locales = State.getLocales();
-    const calendario = State.getCalendario();
-    const config = State.getConfig();
-    RESULTADOS = procesarRespuestas(rows, locales, calendario, config);
-    estadoEl.textContent = `${rows.length} respuestas procesadas (${new Date().toLocaleTimeString("es-AR")}).`;
-    renderTodo();
-  } catch (err) {
-    estadoEl.textContent = "Error al descargar/procesar: " + err.message;
+  const locales = State.getLocales();
+  const calendario = State.getCalendario();
+  const config = State.getConfig();
+  const todas = [];
+  const errores = [];
+  let totalFilas = 0;
+
+  for (const fuente of fuentes) {
+    try {
+      const url = fuente.csvUrl;
+      const resp = await fetch(url + (url.includes("?") ? "&" : "?") + "_=" + Date.now());
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      const text = await resp.text();
+      const rows = csvToObjects(text);
+      totalFilas += rows.length;
+      const resultados = procesarRespuestas(rows, locales, calendario, config).map((r) => ({
+        ...r,
+        fuenteNombre: fuente.nombre,
+      }));
+      todas.push(...resultados);
+    } catch (err) {
+      errores.push(`${fuente.nombre}: ${err.message}`);
+    }
   }
+
+  RESULTADOS = todas;
+  const resumen = `${totalFilas} respuestas procesadas de ${fuentes.length} fuente(s) (${new Date().toLocaleTimeString("es-AR")}).`;
+  estadoEl.textContent = errores.length ? `${resumen} Errores: ${errores.join(" | ")}` : resumen;
+  renderTodo();
 }
 
 function renderTodo() {
   renderResumen();
+  poblarFiltroTipoDashboard();
   renderDashboard();
   renderRespuestas();
   renderLocalesNuevos();
@@ -57,6 +73,23 @@ function fechaKeyToDate(fk) {
   return new Date(Date.UTC(y, m - 1, d));
 }
 
+function poblarFiltroTipoDashboard() {
+  const calendario = State.getCalendario();
+  const sel = document.getElementById("filtroTipoDia");
+  const valorActual = sel.value;
+  sel.innerHTML = '<option value="">Todos</option>';
+  calendario
+    .slice()
+    .sort((a, b) => Number(a.dia_semana) - Number(b.dia_semana))
+    .forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = String(c.dia_semana);
+      opt.textContent = `${diaLabel(Number(c.dia_semana))} — ${c.tipo_esperado}`;
+      sel.appendChild(opt);
+    });
+  if ([...sel.options].some((o) => o.value === valorActual)) sel.value = valorActual;
+}
+
 function renderDashboard() {
   const locales = State.getLocales();
   const calendario = State.getCalendario();
@@ -69,9 +102,14 @@ function renderDashboard() {
     ? fechaKeyToDate(desdeInput)
     : new Date(hasta.getTime() - 27 * 86400000);
 
+  const diaFiltro = document.getElementById("filtroTipoDia").value;
+
   const fechas = [];
   for (let d = new Date(desde); d <= hasta; d = new Date(d.getTime() + 86400000)) {
-    fechas.push(d.toISOString().slice(0, 10));
+    const fk = d.toISOString().slice(0, 10);
+    const diaIso = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+    if (diaFiltro && String(diaIso) !== diaFiltro) continue;
+    fechas.push(fk);
   }
 
   const okSet = new Set();
@@ -106,9 +144,13 @@ function renderDashboard() {
 function renderRespuestas() {
   const filtroEstado = document.getElementById("filtroEstado").value;
   const filtroTexto = document.getElementById("filtroTexto").value.trim().toLowerCase();
+  const filtroDesde = document.getElementById("respDesde").value;
+  const filtroHasta = document.getElementById("respHasta").value;
   const filtradas = RESULTADOS.filter((r) => {
     if (filtroEstado && r.estado !== filtroEstado) return false;
     if (filtroTexto && !(r.sucursalRaw || "").toLowerCase().includes(filtroTexto)) return false;
+    if (filtroDesde && (!r.fechaKey || r.fechaKey < filtroDesde)) return false;
+    if (filtroHasta && (!r.fechaKey || r.fechaKey > filtroHasta)) return false;
     return true;
   }).slice(-500);
 
@@ -124,7 +166,7 @@ function renderRespuestas() {
   }
 
   let html =
-    "<table><thead><tr><th>Fecha</th><th>Sucursal</th><th>Tipo seleccionado</th><th>Tipo esperado</th><th>Estado</th><th>Detalle</th><th>Archivo</th></tr></thead><tbody>";
+    "<table><thead><tr><th>Fecha</th><th>Fuente</th><th>Sucursal</th><th>Tipo seleccionado</th><th>Tipo esperado</th><th>Estado</th><th>Detalle</th><th>Archivo</th></tr></thead><tbody>";
   filtradas
     .slice()
     .reverse()
@@ -132,7 +174,7 @@ function renderRespuestas() {
       const archivoHtml = r.archivo && r.archivo.startsWith("http")
         ? `<a href="${r.archivo}" target="_blank" rel="noopener">link</a>`
         : r.archivo || "";
-      html += `<tr><td>${r.marcaTemporal}</td><td>${r.sucursalRaw}</td><td>${r.tipoNormalizado || r.tipoRaw}</td><td>${r.tipoEsperado || ""}</td><td>${r.estado}</td><td>${r.detalle}</td><td>${archivoHtml}</td></tr>`;
+      html += `<tr><td>${r.marcaTemporal}</td><td>${r.fuenteNombre || ""}</td><td>${r.sucursalRaw}</td><td>${r.tipoNormalizado || r.tipoRaw}</td><td>${r.tipoEsperado || ""}</td><td>${r.estado}</td><td>${r.detalle}</td><td>${archivoHtml}</td></tr>`;
     });
   html += "</tbody></table>";
   document.getElementById("tablaRespuestas").innerHTML = html;
@@ -275,13 +317,47 @@ function initTabs() {
   });
 }
 
-function initConfig() {
-  const input = document.getElementById("csvUrl");
-  input.value = State.getCsvUrl();
-  document.getElementById("guardarCsvUrl").addEventListener("click", () => {
-    State.setCsvUrl(input.value.trim());
-    fetchYProcesar();
+function renderFuentes() {
+  const fuentes = State.getFuentes();
+  let html = "<table><thead><tr><th>Nombre</th><th>Link CSV</th><th></th></tr></thead><tbody>";
+  fuentes.forEach((f, i) => {
+    html += `<tr>
+      <td><input data-i="${i}" data-f="nombre" value="${(f.nombre || "").replace(/"/g, "&quot;")}"></td>
+      <td><input data-i="${i}" data-f="csvUrl" value="${(f.csvUrl || "").replace(/"/g, "&quot;")}"></td>
+      <td><button data-del="${i}">Borrar</button></td>
+    </tr>`;
   });
+  html += "</tbody></table>";
+  document.getElementById("tablaFuentes").innerHTML = html;
+
+  document.querySelectorAll("#tablaFuentes input").forEach((inp) => {
+    inp.addEventListener("change", () => {
+      const fuentes = State.getFuentes();
+      fuentes[Number(inp.dataset.i)][inp.dataset.f] = inp.value.trim();
+      State.setFuentes(fuentes);
+    });
+  });
+  document.querySelectorAll("#tablaFuentes button[data-del]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const fuentes = State.getFuentes();
+      fuentes.splice(Number(btn.dataset.del), 1);
+      State.setFuentes(fuentes);
+      renderFuentes();
+    });
+  });
+}
+
+function agregarFuente() {
+  const fuentes = State.getFuentes();
+  fuentes.push({ id: "fuente-" + Date.now(), nombre: "", csvUrl: "" });
+  State.setFuentes(fuentes);
+  renderFuentes();
+}
+
+function initConfig() {
+  renderFuentes();
+  document.getElementById("btnAgregarFuente").addEventListener("click", agregarFuente);
+  document.getElementById("guardarFuentes").addEventListener("click", fetchYProcesar);
 
   const cfg = State.getConfig();
   document.getElementById("cfgStartHour").value = cfg.allowedStartHour;
@@ -307,11 +383,14 @@ window.addEventListener("DOMContentLoaded", () => {
   renderCalendario();
   document.getElementById("btnActualizar").addEventListener("click", fetchYProcesar);
   document.getElementById("aplicarFiltrosDashboard").addEventListener("click", renderDashboard);
+  document.getElementById("filtroTipoDia").addEventListener("change", renderDashboard);
   document.getElementById("filtroEstado").addEventListener("change", renderRespuestas);
   document.getElementById("filtroTexto").addEventListener("input", renderRespuestas);
+  document.getElementById("respDesde").addEventListener("change", renderRespuestas);
+  document.getElementById("respHasta").addEventListener("change", renderRespuestas);
   document.getElementById("btnAgregarLocal").addEventListener("click", agregarLocalManual);
   document.getElementById("guardarCalendarioBtn").addEventListener("click", guardarCalendario);
   document.getElementById("btnImportarSeed").addEventListener("click", importarLocalesSeed);
 
-  if (State.getCsvUrl()) fetchYProcesar();
+  if (State.getFuentes().length) fetchYProcesar();
 });
