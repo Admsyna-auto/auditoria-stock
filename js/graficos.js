@@ -11,13 +11,17 @@ function crearChart(id, config) {
   destruirChart(id);
   const canvas = document.getElementById(id);
   if (!canvas) return;
+  config.options = Object.assign(
+    { maintainAspectRatio: false, responsive: true },
+    config.options
+  );
   CHART_INSTANCES[id] = new Chart(canvas, config);
 }
 
-const COLOR_OK = "#28a745";
+const COLOR_OK = "#4ebda9";
 const COLOR_MEDIO = "#f0ad4e";
-const COLOR_NO = "#d9534f";
-const COLOR_AZUL = "#1a73e8";
+const COLOR_NO = "#c0392b";
+const COLOR_GRIS = "#8b9095";
 
 function colorPorPct(pct) {
   if (pct === null || pct === undefined) return "#ccc";
@@ -26,12 +30,40 @@ function colorPorPct(pct) {
   return COLOR_NO;
 }
 
+function kpiCard(label, valor, clase) {
+  return `<div class="kpi-card ${clase || ""}"><div class="kpi-label">${label}</div><div class="kpi-value">${valor}</div></div>`;
+}
+
+function renderKpisGraficos(filasReporte) {
+  const cont = document.getElementById("kpisGraficos");
+  if (!cont) return;
+
+  const total = RESULTADOS.length;
+  const ok = RESULTADOS.filter((r) => r.estado === "✅ OK").length;
+  const incumplimientos = total - ok;
+  const pctGeneral = total > 0 ? ((ok / total) * 100).toFixed(1) + "%" : "—";
+
+  const locales = State.getLocales();
+  const activos = locales.filter((l) => l.activo !== false).length;
+  const enRiesgo = filasReporte.filter((f) => f.pctAnual !== null && f.pctAnual < 0.7).length;
+
+  cont.innerHTML =
+    kpiCard("Total respuestas", total.toLocaleString("es-AR")) +
+    kpiCard("OK", ok.toLocaleString("es-AR"), "kpi-ok") +
+    kpiCard("Incumplimientos", incumplimientos.toLocaleString("es-AR"), incumplimientos > 0 ? "kpi-no" : "") +
+    kpiCard("% Cumplimiento general", pctGeneral) +
+    kpiCard("Locales activos", activos) +
+    kpiCard("Locales en riesgo (&lt;70%)", enRiesgo, enRiesgo > 0 ? "kpi-no" : "kpi-ok");
+}
+
 function renderGraficos() {
   const cont = document.getElementById("tab-graficos");
   if (!cont) return;
   const locales = State.getLocales();
   const fuentes = State.getFuentes();
   const filasReporte = calcularReporte(locales, fuentes, RESULTADOS);
+
+  renderKpisGraficos(filasReporte);
 
   // 1. Cumplimiento acumulado anual por provincia
   const porProvincia = promedioPorCampo(filasReporte, "provincia");
@@ -101,8 +133,11 @@ function renderGraficos() {
       labels: entradas.map(([e]) => e),
       datasets: [{
         data: entradas.map(([, c]) => c),
-        backgroundColor: ["#28a745", "#f0ad4e", "#fd7e14", "#6c757d", "#d9534f", "#0dcaf0"],
+        backgroundColor: [COLOR_OK, COLOR_MEDIO, "#e08a3c", COLOR_GRIS, COLOR_NO, "#5aa9c9"],
       }],
+    },
+    options: {
+      plugins: { legend: { position: "right", labels: { boxWidth: 12, font: { size: 11 } } } },
     },
   });
 
@@ -115,8 +150,8 @@ function renderGraficos() {
       datasets: [{
         label: "% Cumplimiento general",
         data: evolucion.map((e) => (e.pct === null ? null : (e.pct * 100).toFixed(1))),
-        borderColor: COLOR_AZUL,
-        backgroundColor: COLOR_AZUL,
+        borderColor: COLOR_OK,
+        backgroundColor: COLOR_OK,
         tension: 0.2,
         spanGaps: true,
       }],

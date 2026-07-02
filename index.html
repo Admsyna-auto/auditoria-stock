@@ -45,6 +45,21 @@
   .config-grid { display: grid; grid-template-columns: repeat(4, 100px); gap: 10px; margin: 10px 0; }
   .table-scroll { overflow: auto; max-height: 70vh; }
   #estadoCarga { font-size: 0.85rem; color: var(--gris-600); margin-top: 8px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi-card { background: white; border: 1px solid var(--gris-200); border-radius: 8px; padding: 10px 14px; }
+  .kpi-card .kpi-label { font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gris-600); }
+  .kpi-card .kpi-value { font-size: 1.5rem; font-weight: 700; color: var(--gris); margin-top: 2px; }
+  .kpi-card.kpi-ok .kpi-value { color: var(--brand-dark); }
+  .kpi-card.kpi-no .kpi-value { color: #c0392b; }
+
+  .graficos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-card { margin-bottom: 0; }
+  .chart-box { position: relative; height: 220px; }
+  .chart-box-wide { height: 200px; }
+  @media (max-width: 800px) {
+    .graficos-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -96,26 +111,29 @@
   </div>
 
   <div class="tab-panel" id="tab-graficos">
-    <section class="card">
-      <h2>Cumplimiento acumulado anual por provincia</h2>
-      <canvas id="chartProvincia" height="90"></canvas>
-    </section>
-    <section class="card">
-      <h2>Cumplimiento acumulado anual por marca</h2>
-      <canvas id="chartMarca" height="90"></canvas>
-    </section>
-    <section class="card">
-      <h2>Top 10 — peor cumplimiento</h2>
-      <canvas id="chartPeores" height="120"></canvas>
-    </section>
-    <section class="card">
-      <h2>Distribución de estados (todas las respuestas)</h2>
-      <canvas id="chartEstados" height="120"></canvas>
-    </section>
-    <section class="card">
-      <h2>Evolución del cumplimiento general (últimas 12 semanas)</h2>
-      <canvas id="chartEvolucion" height="90"></canvas>
-    </section>
+    <div class="kpis" id="kpisGraficos"></div>
+    <div class="graficos-grid">
+      <section class="card chart-card">
+        <h2>Cumplimiento acumulado anual por provincia</h2>
+        <div class="chart-box"><canvas id="chartProvincia"></canvas></div>
+      </section>
+      <section class="card chart-card">
+        <h2>Cumplimiento acumulado anual por marca</h2>
+        <div class="chart-box"><canvas id="chartMarca"></canvas></div>
+      </section>
+      <section class="card chart-card">
+        <h2>Top 10 — peor cumplimiento</h2>
+        <div class="chart-box"><canvas id="chartPeores"></canvas></div>
+      </section>
+      <section class="card chart-card">
+        <h2>Distribución de estados</h2>
+        <div class="chart-box"><canvas id="chartEstados"></canvas></div>
+      </section>
+      <section class="card chart-card" style="grid-column: 1 / -1;">
+        <h2>Evolución del cumplimiento general (últimas 12 semanas)</h2>
+        <div class="chart-box chart-box-wide"><canvas id="chartEvolucion"></canvas></div>
+      </section>
+    </div>
   </div>
 
   <div class="tab-panel" id="tab-reporte">
