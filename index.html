@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auditoría de Stock — Control diario</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, Arial, sans-serif; margin: 0; color: #1f2328; background: #f6f8fa; }
+  header { background: #1a73e8; color: white; padding: 14px 20px; }
+  header h1 { margin: 0; font-size: 1.2rem; }
+  nav.tabs { display: flex; gap: 4px; padding: 10px 20px 0; background: white; border-bottom: 1px solid #ddd; }
+  .tab-btn { border: none; background: none; color: #1f2328; padding: 10px 16px; cursor: pointer; font-size: 0.9rem; border-bottom: 3px solid transparent; }
+  .tab-btn.active { border-bottom-color: #1a73e8; font-weight: 600; color: #1a73e8; }
+  main { padding: 20px; }
+  .tab-panel { display: none; }
+  section.card { background: white; border: 1px solid #e1e4e8; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  h2 { font-size: 1rem; margin-top: 0; }
+  table { border-collapse: collapse; font-size: 0.8rem; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; white-space: nowrap; }
+  th.local, td.local { position: sticky; left: 0; background: #fff; text-align: left; }
+  .ok { background: #d4edda; color: #155724; text-align: center; }
+  .no { background: #f8d7da; color: #721c24; text-align: center; }
+  .blank { background: #f5f5f5; }
+  .chip { display: inline-block; background: #eef1f4; border-radius: 12px; padding: 4px 10px; margin: 2px; font-size: 0.8rem; }
+  input[type=text], input[type=url], input[type=number], input[type=date] { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+  input { width: 100%; }
+  button { padding: 8px 14px; border: none; background: #1a73e8; color: white; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  button.secondary { background: #6c757d; }
+  .filtros { display: flex; gap: 12px; align-items: end; margin-bottom: 12px; flex-wrap: wrap; }
+  .filtros label { font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px; }
+  .config-grid { display: grid; grid-template-columns: repeat(4, 100px); gap: 10px; margin: 10px 0; }
+  .table-scroll { overflow: auto; max-height: 70vh; }
+  #estadoCarga { font-size: 0.85rem; color: #555; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Auditoría de Stock — Control diario RIIING / DIGGIT</h1>
+</header>
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+  <button class="tab-btn" data-tab="respuestas">Respuestas</button>
+  <button class="tab-btn" data-tab="locales">Locales</button>
+  <button class="tab-btn" data-tab="calendario">Calendario</button>
+  <button class="tab-btn" data-tab="config">Config</button>
+</nav>
+<main>
+
+  <div class="tab-panel" id="tab-dashboard" style="display:block">
+    <section class="card">
+      <h2>Estado general</h2>
+      <div id="resumenEstados"></div>
+    </section>
+    <section class="card">
+      <h2>Cumplimiento por sucursal</h2>
+      <div class="filtros">
+        <label>Desde <input type="date" id="desde"></label>
+        <label>Hasta <input type="date" id="hasta"></label>
+        <label>Marca
+          <select id="filtroMarca">
+            <option value="">Todas</option>
+            <option value="RIIING">RIIING</option>
+            <option value="DIGGIT">DIGGIT</option>
+          </select>
+        </label>
+        <button id="aplicarFiltrosDashboard">Aplicar</button>
+      </div>
+      <div class="table-scroll" id="tablaDashboard">Sin datos aún — configurá el CSV en la pestaña Config.</div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="tab-respuestas">
+    <section class="card">
+      <h2>Respuestas procesadas</h2>
+      <div class="filtros">
+        <label>Estado
+          <select id="filtroEstado"><option value="">Todos</option></select>
+        </label>
+        <label>Buscar sucursal <input type="text" id="filtroTexto" placeholder="ej. PARANA"></label>
+      </div>
+      <div class="table-scroll" id="tablaRespuestas"></div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="tab-locales">
+    <section class="card">
+      <h2>Sucursales detectadas sin registrar</h2>
+      <div id="localesNuevos"></div>
+    </section>
+    <section class="card">
+      <h2>Locales</h2>
+      <button id="btnAgregarLocal">+ Agregar local manual</button>
+      <div class="table-scroll" style="margin-top:10px" id="tablaLocales"></div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="tab-calendario">
+    <section class="card">
+      <h2>Calendario semanal (tipo esperado por día)</h2>
+      <div id="tablaCalendario"></div>
+      <button id="guardarCalendarioBtn" style="margin-top:10px">Guardar</button>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="tab-config">
+    <section class="card">
+      <h2>Fuente de datos (CSV publicado del Form)</h2>
+      <p>Google Sheets → Archivo → Compartir → Publicar en la web → hoja "Respuestas de formulario 1" → formato CSV.</p>
+      <input type="url" id="csvUrl" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" style="width:100%">
+      <button id="guardarCsvUrl" style="margin-top:10px">Guardar y actualizar</button>
+      <div id="estadoCarga"></div>
+    </section>
+    <section class="card">
+      <h2>Horario permitido de carga</h2>
+      <div class="config-grid">
+        <label>Hora desde<input type="number" id="cfgStartHour" min="0" max="23"></label>
+        <label>Min desde<input type="number" id="cfgStartMin" min="0" max="59"></label>
+        <label>Hora hasta<input type="number" id="cfgEndHour" min="0" max="23"></label>
+        <label>Min hasta<input type="number" id="cfgEndMin" min="0" max="59"></label>
+      </div>
+      <button id="guardarConfig">Guardar</button>
+    </section>
+    <section class="card">
+      <h2>Locales</h2>
+      <p>Importa la lista de 107 locales (código, nombre, emails) exportada de tu planilla actual, así no hay que tipearla a mano.</p>
+      <button id="btnImportarSeed">Importar locales iniciales (107)</button>
+      <div id="estadoSeed" style="margin-top:8px;font-size:0.85rem;color:#555"></div>
+    </section>
+    <section class="card">
+      <button class="secondary" id="btnActualizar">🔄 Actualizar respuestas ahora</button>
+    </section>
+  </div>
+
+</main>
+
+<script src="js/csv.js"></script>
+<script src="js/state.js"></script>
+<script src="js/validacion.js"></script>
+<script src="js/locales_seed.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
