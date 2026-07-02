@@ -63,12 +63,13 @@ function calcularCumplimiento(localCodigo, okSet, desdeKey, hastaKey, diasConCon
   let ok = 0;
   let total = 0;
   if (!desdeKey || !hastaKey || desdeKey > hastaKey) return { ok, total, pct: null };
+  const clave = claveLocal(localCodigo);
   for (let fk = desdeKey; fk <= hastaKey; fk = sumarDias(fk, 1)) {
     const dia = fechaKeyDia(fk);
     if (!diasConControl.has(dia)) continue;
     if (diaFiltro && dia !== diaFiltro) continue;
     total++;
-    if (okSet.has(`${localCodigo}|${fk}`)) ok++;
+    if (okSet.has(`${clave}|${fk}`)) ok++;
   }
   return { ok, total, pct: total > 0 ? ok / total : null };
 }

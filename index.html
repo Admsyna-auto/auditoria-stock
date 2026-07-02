@@ -7,8 +7,10 @@
 <style>
   * { box-sizing: border-box; }
   body { font-family: system-ui, Arial, sans-serif; margin: 0; color: #1f2328; background: #f6f8fa; }
-  header { background: #1a73e8; color: white; padding: 14px 20px; }
+  header { background: #1a73e8; color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   header h1 { margin: 0; font-size: 1.2rem; }
+  #btnActualizarGlobal { background: white; color: #1a73e8; white-space: nowrap; }
+  #estadoCargaGlobal { font-size: 0.75rem; color: #d9e8ff; margin-top: 2px; }
   nav.tabs { display: flex; gap: 4px; padding: 10px 20px 0; background: white; border-bottom: 1px solid #ddd; }
   .tab-btn { border: none; background: none; color: #1f2328; padding: 10px 16px; cursor: pointer; font-size: 0.9rem; border-bottom: 3px solid transparent; }
   .tab-btn.active { border-bottom-color: #1a73e8; font-weight: 600; color: #1a73e8; }
@@ -37,6 +39,10 @@
 <body>
 <header>
   <h1>Auditoría de Stock — Control diario RIIING / DIGGIT</h1>
+  <div>
+    <button id="btnActualizarGlobal">🔄 Actualizar</button>
+    <div id="estadoCargaGlobal"></div>
+  </div>
 </header>
 <nav class="tabs">
   <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
@@ -134,7 +140,29 @@
     </section>
     <section class="card">
       <h2>Locales</h2>
-      <button id="btnAgregarLocal">+ Agregar local manual</button>
+      <div class="filtros">
+        <label>Buscar <input type="text" id="filtroLocalesTexto" placeholder="código o nombre"></label>
+        <label>Marca
+          <select id="filtroLocalesMarca"><option value="">Todas</option></select>
+        </label>
+        <label>Provincia
+          <select id="filtroLocalesProvincia"><option value="">Todas</option></select>
+        </label>
+        <label>Estado
+          <select id="filtroLocalesActivo">
+            <option value="">Todos</option>
+            <option value="1">Activos</option>
+            <option value="0">Inactivos</option>
+          </select>
+        </label>
+      </div>
+      <div class="filtros">
+        <button id="btnAgregarLocal">+ Agregar local manual</button>
+        <button id="btnExportarLocales" class="secondary">⬇ Exportar a Excel</button>
+        <button id="btnImportarLocalesExcel" class="secondary">⬆ Importar desde Excel</button>
+        <input type="file" id="inputImportarLocalesExcel" accept=".xlsx,.xls" style="display:none">
+      </div>
+      <div id="estadoImportExcel" style="font-size:0.85rem;color:#555;margin:6px 0"></div>
       <div class="table-scroll" style="margin-top:10px" id="tablaLocales"></div>
     </section>
   </div>
@@ -190,6 +218,7 @@
 <script src="js/validacion.js"></script>
 <script src="js/metricas.js"></script>
 <script src="js/locales_seed.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

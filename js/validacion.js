@@ -3,9 +3,20 @@ function normalizeTipo(tipoRaw) {
   return tipoRaw.replace(/^[^:]+:\s*/i, "").trim();
 }
 
+/**
+ * Clave canónica para matchear un local, sin importar si el código está
+ * escrito como "SUC-554", "554" o "Suc 554": siempre se compara por el
+ * número puro. Así una edición manual del campo Código no rompe el cruce
+ * con las respuestas del Form.
+ */
+function claveLocal(codigo) {
+  const digitos = (codigo || "").replace(/\D/g, "");
+  return digitos || (codigo || "").trim().toUpperCase();
+}
+
 function codigoDeSucursal(nombre) {
   const m = (nombre || "").match(/SUC-(\d+)/i);
-  return m ? `SUC-${m[1]}` : (nombre || "").trim();
+  return claveLocal(m ? m[1] : nombre);
 }
 
 // "26/01/2026 10:34:52" -> { fechaKey, diaIso(1=Lun..7=Dom), hour, minute }
@@ -34,7 +45,7 @@ function getExpectedType(diaIso, calendario) {
  */
 function procesarRespuestas(rows, locales, calendario, config) {
   const localByCodigo = new Map();
-  locales.forEach((l) => localByCodigo.set(l.codigo, l));
+  locales.forEach((l) => localByCodigo.set(claveLocal(l.codigo), l));
 
   const vistosPorDia = new Map(); // localCodigo|fechaKey -> true (hubo carga ese día)
   const okPorTipo = new Map(); // localCodigo|fechaKey|tipoEsperado -> true (hubo OK)
