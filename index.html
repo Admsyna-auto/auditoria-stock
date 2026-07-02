@@ -46,6 +46,7 @@
 </header>
 <nav class="tabs">
   <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+  <button class="tab-btn" data-tab="graficos">Gráficos</button>
   <button class="tab-btn" data-tab="reporte">Reporte</button>
   <button class="tab-btn" data-tab="metricas">Métricas</button>
   <button class="tab-btn" data-tab="respuestas">Respuestas</button>
@@ -77,8 +78,32 @@
           <select id="filtroTipoDia"><option value="">Todos</option></select>
         </label>
         <button id="aplicarFiltrosDashboard">Aplicar</button>
+        <button id="btnExportarDashboard" class="secondary">⬇ Exportar Excel</button>
       </div>
       <div class="table-scroll" id="tablaDashboard">Sin datos aún — configurá el CSV en la pestaña Config.</div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="tab-graficos">
+    <section class="card">
+      <h2>Cumplimiento acumulado anual por provincia</h2>
+      <canvas id="chartProvincia" height="90"></canvas>
+    </section>
+    <section class="card">
+      <h2>Cumplimiento acumulado anual por marca</h2>
+      <canvas id="chartMarca" height="90"></canvas>
+    </section>
+    <section class="card">
+      <h2>Top 10 — peor cumplimiento</h2>
+      <canvas id="chartPeores" height="120"></canvas>
+    </section>
+    <section class="card">
+      <h2>Distribución de estados (todas las respuestas)</h2>
+      <canvas id="chartEstados" height="120"></canvas>
+    </section>
+    <section class="card">
+      <h2>Evolución del cumplimiento general (últimas 12 semanas)</h2>
+      <canvas id="chartEvolucion" height="90"></canvas>
     </section>
   </div>
 
@@ -87,6 +112,7 @@
       <h2>Reporte general por sucursal</h2>
       <p style="font-size:0.85rem;color:#555">Controles enviados en la semana actual, % de cumplimiento semanal, del mes en curso y acumulado del año.</p>
       <div class="filtros">
+        <label>Buscar sucursal <input type="text" id="filtroReporteTexto" placeholder="código o nombre"></label>
         <label>Marca
           <select id="filtroMarcaReporte">
             <option value="">Todas</option>
@@ -95,6 +121,13 @@
             <option value="JBL">JBL</option>
           </select>
         </label>
+        <label>Provincia
+          <select id="filtroReporteProvincia"><option value="">Todas</option></select>
+        </label>
+        <label>Responsable
+          <select id="filtroReporteResponsable"><option value="">Todos</option></select>
+        </label>
+        <button id="btnExportarReporte" class="secondary">⬇ Exportar Excel</button>
       </div>
       <div class="table-scroll" id="tablaReporte"></div>
     </section>
@@ -113,6 +146,7 @@
             <option value="JBL">JBL</option>
           </select>
         </label>
+        <button id="btnExportarMetricas" class="secondary">⬇ Exportar Excel</button>
       </div>
       <div class="table-scroll" id="tablaMetricas"></div>
     </section>
@@ -128,6 +162,7 @@
         <label>Buscar sucursal <input type="text" id="filtroTexto" placeholder="ej. PARANA"></label>
         <label>Desde <input type="date" id="respDesde"></label>
         <label>Hasta <input type="date" id="respHasta"></label>
+        <button id="btnExportarRespuestas" class="secondary">⬇ Exportar Excel</button>
       </div>
       <div class="table-scroll" id="tablaRespuestas"></div>
     </section>
@@ -219,6 +254,8 @@
 <script src="js/metricas.js"></script>
 <script src="js/locales_seed.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="js/graficos.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

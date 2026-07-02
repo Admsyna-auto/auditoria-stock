@@ -66,6 +66,19 @@ function renderTodo() {
   renderLocalesNuevos();
   renderReporte();
   renderMetricas();
+  if (getComputedStyle(document.getElementById("tab-graficos")).display !== "none") renderGraficos();
+}
+
+function exportarTablaExcel(idContenedor, nombreArchivo) {
+  const tabla = document.querySelector(`#${idContenedor} table`);
+  if (!tabla) {
+    alert("No hay datos para exportar todavía.");
+    return;
+  }
+  const hoja = XLSX.utils.table_to_sheet(tabla);
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, "Datos");
+  XLSX.writeFile(libro, nombreArchivo);
 }
 
 function pct(v) {
@@ -79,16 +92,42 @@ function claseCumpl(v) {
   return "no";
 }
 
+function poblarFiltrosReporte(filas) {
+  const selProvincia = document.getElementById("filtroReporteProvincia");
+  const selResponsable = document.getElementById("filtroReporteResponsable");
+  const provinciaActual = selProvincia.value;
+  const responsableActual = selResponsable.value;
+
+  const provincias = [...new Set(filas.map((f) => f.local.provincia).filter(Boolean))].sort();
+  selProvincia.innerHTML = '<option value="">Todas</option>' + provincias.map((p) => `<option value="${p}">${p}</option>`).join("");
+  if (provincias.includes(provinciaActual)) selProvincia.value = provinciaActual;
+
+  const responsables = [...new Set(filas.map((f) => f.local.responsable).filter(Boolean))].sort();
+  selResponsable.innerHTML = '<option value="">Todos</option>' + responsables.map((r) => `<option value="${r}">${r}</option>`).join("");
+  if (responsables.includes(responsableActual)) selResponsable.value = responsableActual;
+}
+
 function renderReporte() {
   const cont = document.getElementById("tablaReporte");
   if (!cont) return;
   const locales = State.getLocales();
   const fuentes = State.getFuentes();
   const filas = calcularReporte(locales, fuentes, RESULTADOS);
-  const marcaFiltro = document.getElementById("filtroMarcaReporte")?.value || "";
-  const filtradas = filas.filter((f) => !marcaFiltro || f.local.marca === marcaFiltro);
+  poblarFiltrosReporte(filas);
 
-  const mesNombre = filtradas[0]?.mesActualNombre || "";
+  const texto = (document.getElementById("filtroReporteTexto")?.value || "").trim().toLowerCase();
+  const marcaFiltro = document.getElementById("filtroMarcaReporte")?.value || "";
+  const provinciaFiltro = document.getElementById("filtroReporteProvincia")?.value || "";
+  const responsableFiltro = document.getElementById("filtroReporteResponsable")?.value || "";
+  const filtradas = filas.filter((f) => {
+    if (texto && !`${f.local.codigo} ${f.local.nombre}`.toLowerCase().includes(texto)) return false;
+    if (marcaFiltro && f.local.marca !== marcaFiltro) return false;
+    if (provinciaFiltro && f.local.provincia !== provinciaFiltro) return false;
+    if (responsableFiltro && f.local.responsable !== responsableFiltro) return false;
+    return true;
+  });
+
+  const mesNombre = filas[0]?.mesActualNombre || "";
   let html = `<table><thead><tr><th>Código</th><th>Provincia</th><th>Responsable</th><th class="local">Sucursal</th><th>Controles enviados</th><th>% Cumpl semanal</th><th>% ${mesNombre}</th><th>% Cumpl acumulado anual</th></tr></thead><tbody>`;
   filtradas
     .slice()
@@ -562,6 +601,7 @@ function initTabs() {
       document.querySelectorAll(".tab-panel").forEach((p) => (p.style.display = "none"));
       btn.classList.add("active");
       document.getElementById("tab-" + btn.dataset.tab).style.display = "block";
+      if (btn.dataset.tab === "graficos" && RESULTADOS.length) renderGraficos();
     });
   });
 }
@@ -664,7 +704,15 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("fuenteCalendario").addEventListener("change", renderCalendario);
   document.getElementById("btnImportarSeed").addEventListener("click", importarLocalesSeed);
   document.getElementById("filtroMarcaReporte").addEventListener("change", renderReporte);
+  document.getElementById("filtroReporteTexto").addEventListener("input", renderReporte);
+  document.getElementById("filtroReporteProvincia").addEventListener("change", renderReporte);
+  document.getElementById("filtroReporteResponsable").addEventListener("change", renderReporte);
   document.getElementById("filtroMarcaMetricas").addEventListener("change", renderMetricas);
+
+  document.getElementById("btnExportarDashboard").addEventListener("click", () => exportarTablaExcel("tablaDashboard", "dashboard.xlsx"));
+  document.getElementById("btnExportarReporte").addEventListener("click", () => exportarTablaExcel("tablaReporte", "reporte.xlsx"));
+  document.getElementById("btnExportarMetricas").addEventListener("click", () => exportarTablaExcel("tablaMetricas", "metricas.xlsx"));
+  document.getElementById("btnExportarRespuestas").addEventListener("click", () => exportarTablaExcel("tablaRespuestas", "respuestas.xlsx"));
 
   if (State.getFuentes().length) fetchYProcesar();
 });

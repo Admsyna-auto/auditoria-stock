@@ -137,3 +137,56 @@ function calcularMetricas(locales, fuentes, resultados) {
     return { local, porDia, porMes, cumplGral: general.pct, ok: general.ok, total: general.total };
   });
 }
+
+/**
+ * Promedia pctAnual (calcularReporte) agrupando por un campo del local
+ * (ej. "provincia" o "marca"). Ignora locales sin ese campo.
+ */
+function promedioPorCampo(filasReporte, campo) {
+  const grupos = new Map(); // valor -> {suma, n}
+  filasReporte.forEach((f) => {
+    const valor = f.local[campo];
+    if (!valor || f.pctAnual === null) return;
+    if (!grupos.has(valor)) grupos.set(valor, { suma: 0, n: 0 });
+    const g = grupos.get(valor);
+    g.suma += f.pctAnual;
+    g.n += 1;
+  });
+  return [...grupos.entries()]
+    .map(([valor, g]) => ({ valor, pct: g.suma / g.n, n: g.n }))
+    .sort((a, b) => b.pct - a.pct);
+}
+
+function distribucionEstados(resultados) {
+  const counts = {};
+  resultados.forEach((r) => (counts[r.estado] = (counts[r.estado] || 0) + 1));
+  return counts;
+}
+
+/**
+ * % de cumplimiento general (todas las marcas/locales) por semana, para las
+ * últimas N semanas, sirve para ver la tendencia en el tiempo.
+ */
+function evolucionSemanal(locales, fuentes, resultados, nSemanas) {
+  const okSet = construirOkSet(resultados);
+  const hoy = hoyKey();
+  const semanas = [];
+  let inicio = inicioSemana(hoy);
+  for (let i = 0; i < nSemanas; i++) {
+    semanas.unshift(inicio);
+    inicio = sumarDias(inicio, -7);
+  }
+
+  return semanas.map((desde) => {
+    const hasta = sumarDias(desde, 6) > hoy ? hoy : sumarDias(desde, 6);
+    let ok = 0;
+    let total = 0;
+    locales.forEach((local) => {
+      const diasConControl = new Set(calendarioParaLocal(local, fuentes).map((c) => Number(c.dia_semana)));
+      const r = calcularCumplimiento(local.codigo, okSet, desde, hasta, diasConControl);
+      ok += r.ok;
+      total += r.total;
+    });
+    return { semana: desde, pct: total > 0 ? ok / total : null };
+  });
+}
