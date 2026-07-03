@@ -18,7 +18,7 @@
   body { font-family: system-ui, Arial, sans-serif; margin: 0; color: var(--gris); background: var(--gris-100); }
   header { background: var(--brand); color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   header h1 { margin: 0; font-size: 1.2rem; }
-  #btnActualizarGlobal { background: white; color: var(--brand-dark); white-space: nowrap; }
+  #btnActualizarGlobal, #btnGuardarGithubGlobal { background: white; color: var(--brand-dark); white-space: nowrap; }
   #estadoCargaGlobal { font-size: 0.75rem; color: #eafff9; margin-top: 2px; }
   nav.tabs { display: flex; gap: 4px; padding: 10px 20px 0; background: white; border-bottom: 1px solid var(--gris-200); }
   .tab-btn { border: none; background: none; color: var(--gris); padding: 10px 16px; cursor: pointer; font-size: 0.9rem; border-bottom: 3px solid transparent; }
@@ -67,6 +67,7 @@
   <h1>Auditoría de Stock — Control diario RIIING / DIGGIT / JBL</h1>
   <div>
     <button id="btnActualizarGlobal">🔄 Actualizar</button>
+    <button id="btnGuardarGithubGlobal">☁️ Guardar en GitHub</button>
     <div id="estadoCargaGlobal"></div>
   </div>
 </header>

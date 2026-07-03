@@ -779,6 +779,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   renderCalendario();
   document.getElementById("btnActualizar").addEventListener("click", fetchYProcesar);
   document.getElementById("btnActualizarGlobal").addEventListener("click", fetchYProcesar);
+  document.getElementById("btnGuardarGithubGlobal").addEventListener("click", guardarEnGithub);
   document.getElementById("aplicarFiltrosDashboard").addEventListener("click", renderDashboard);
   document.getElementById("filtroTipoDia").addEventListener("change", renderDashboard);
   document.getElementById("filtroEstado").addEventListener("change", renderRespuestas);

@@ -6,7 +6,6 @@ const RUTA_COMPARTIDO = "data/compartido.json";
  * de cada Local se preservan siempre (nunca viven en el archivo compartido).
  */
 async function sincronizarDesdeCompartido(mostrarAlerta) {
-  const estadoEl = document.getElementById("estadoSyncGithub");
   try {
     const resp = await fetch(RUTA_COMPARTIDO + "?_=" + Date.now());
     if (!resp.ok) throw new Error("HTTP " + resp.status);
@@ -38,11 +37,11 @@ async function sincronizarDesdeCompartido(mostrarAlerta) {
 
     const ahora = new Date().toLocaleString("es-AR");
     State.setUltimaSync(ahora);
-    if (estadoEl) estadoEl.textContent = `Sincronizado desde GitHub (${ahora}).`;
+    setEstadoGithub(`Sincronizado desde GitHub (${ahora}).`);
     if (mostrarAlerta) alert("Sincronización completa.");
     return true;
   } catch (err) {
-    if (estadoEl) estadoEl.textContent = "Error al sincronizar: " + err.message;
+    setEstadoGithub("Error al sincronizar: " + err.message);
     if (mostrarAlerta) alert("Error al sincronizar: " + err.message);
     return false;
   }
@@ -67,16 +66,25 @@ function construirPayloadCompartido() {
   return { locales, fuentes, config: State.getConfig() };
 }
 
-async function guardarEnGithub() {
+function setEstadoGithub(texto) {
   const estadoEl = document.getElementById("estadoSyncGithub");
+  const estadoGlobalEl = document.getElementById("estadoCargaGlobal");
+  if (estadoEl) estadoEl.textContent = texto;
+  if (estadoGlobalEl) estadoGlobalEl.textContent = texto;
+}
+
+async function guardarEnGithub() {
   const token = State.getGithubToken();
   const repo = State.getGithubRepo();
   if (!token) {
-    estadoEl.textContent = "Pegá tu token de GitHub primero.";
+    setEstadoGithub("Pegá tu token de GitHub en la pestaña Config primero.");
+    alert("Todavía no configuraste tu token de GitHub. Andá a la pestaña Config para crearlo y pegarlo (una sola vez).");
     return;
   }
 
-  estadoEl.textContent = "Guardando en GitHub...";
+  const btnGlobal = document.getElementById("btnGuardarGithubGlobal");
+  if (btnGlobal) btnGlobal.disabled = true;
+  setEstadoGithub("Guardando en GitHub...");
   const headers = {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
@@ -113,8 +121,10 @@ async function guardarEnGithub() {
 
     const ahora = new Date().toLocaleString("es-AR");
     State.setUltimaSync(ahora);
-    estadoEl.textContent = `Guardado en GitHub correctamente (${ahora}). El sitio público tarda unos minutos en reflejarlo.`;
+    setEstadoGithub(`Guardado en GitHub correctamente (${ahora}). El sitio público tarda unos minutos en reflejarlo.`);
   } catch (err) {
-    estadoEl.textContent = "Error al guardar en GitHub: " + err.message;
+    setEstadoGithub("Error al guardar en GitHub: " + err.message);
+  } finally {
+    if (btnGlobal) btnGlobal.disabled = false;
   }
 }
