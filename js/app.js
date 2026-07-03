@@ -780,6 +780,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btnActualizar").addEventListener("click", fetchYProcesar);
   document.getElementById("btnActualizarGlobal").addEventListener("click", fetchYProcesar);
   document.getElementById("btnGuardarGithubGlobal").addEventListener("click", guardarEnGithub);
+  document.getElementById("btnActualizarSecretoEmails").addEventListener("click", actualizarSecretoEmails);
   document.getElementById("aplicarFiltrosDashboard").addEventListener("click", renderDashboard);
   document.getElementById("filtroTipoDia").addEventListener("change", renderDashboard);
   document.getElementById("filtroEstado").addEventListener("change", renderRespuestas);

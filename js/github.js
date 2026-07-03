@@ -128,3 +128,100 @@ async function guardarEnGithub() {
     if (btnGlobal) btnGlobal.disabled = false;
   }
 }
+
+function setEstadoSecretoEmails(texto) {
+  const el = document.getElementById("estadoSecretoEmails");
+  if (el) el.textContent = texto;
+}
+
+function base64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+function bytesToBase64(bytes) {
+  let bin = "";
+  bytes.forEach((b) => (bin += String.fromCharCode(b)));
+  return btoa(bin);
+}
+
+/**
+ * Arma { "<codigo>": { emailLocal, emailReferente } } con los locales que
+ * tengan al menos un email cargado en este navegador.
+ */
+function construirPayloadEmails() {
+  const payload = {};
+  State.getLocales().forEach((l) => {
+    if (!l.emailLocal) return;
+    payload[claveLocal(l.codigo)] = {
+      emailLocal: l.emailLocal,
+      emailReferente: l.emailReferente || "",
+    };
+  });
+  return payload;
+}
+
+/**
+ * Sube los emails como GitHub Secret (LOCALES_EMAILS_JSON), encriptados en
+ * el navegador con la clave pública del repo (igual que recomienda GitHub
+ * para secretos vía API) — así nunca viajan ni quedan legibles en el repo.
+ */
+async function actualizarSecretoEmails() {
+  const token = State.getGithubToken();
+  const repo = State.getGithubRepo();
+  if (!token) {
+    setEstadoSecretoEmails("Pegá tu token de GitHub arriba primero.");
+    alert("Todavía no configuraste tu token de GitHub.");
+    return;
+  }
+
+  const btn = document.getElementById("btnActualizarSecretoEmails");
+  if (btn) btn.disabled = true;
+  setEstadoSecretoEmails("Encriptando y subiendo emails...");
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+  };
+
+  try {
+    const pkResp = await fetch(`https://api.github.com/repos/${repo}/actions/secrets/public-key`, { headers });
+    if (!pkResp.ok) {
+      const err = await pkResp.json().catch(() => ({}));
+      throw new Error(
+        err.message ||
+          `HTTP ${pkResp.status} — revisá que el token tenga el permiso "Secrets: Read and write".`
+      );
+    }
+    const { key, key_id } = await pkResp.json();
+
+    const payload = construirPayloadEmails();
+    const cantidad = Object.keys(payload).length;
+    if (cantidad === 0) {
+      throw new Error("No hay ningún local con email cargado en este navegador.");
+    }
+
+    const binkey = base64ToBytes(key);
+    const binsec = new TextEncoder().encode(JSON.stringify(payload));
+    const encBytes = sealedBox.seal(binsec, binkey);
+    const encrypted_value = bytesToBase64(encBytes);
+
+    const putResp = await fetch(`https://api.github.com/repos/${repo}/actions/secrets/LOCALES_EMAILS_JSON`, {
+      method: "PUT",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ encrypted_value, key_id }),
+    });
+
+    if (!putResp.ok) {
+      const err = await putResp.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${putResp.status}`);
+    }
+
+    setEstadoSecretoEmails(`Emails de ${cantidad} locales actualizados en GitHub (${new Date().toLocaleString("es-AR")}).`);
+  } catch (err) {
+    setEstadoSecretoEmails("Error al actualizar el secreto: " + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
