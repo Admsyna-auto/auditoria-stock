@@ -111,26 +111,34 @@
   </div>
 
   <div class="tab-panel" id="tab-graficos">
+    <section class="card">
+      <div class="filtros">
+        <label>Desde <input type="date" id="graficosDesde"></label>
+        <label>Hasta <input type="date" id="graficosHasta"></label>
+        <button id="aplicarFiltrosGraficos">Aplicar</button>
+        <button id="btnGraficosAnio" class="secondary">Año completo</button>
+      </div>
+    </section>
     <div class="kpis" id="kpisGraficos"></div>
     <div class="graficos-grid">
       <section class="card chart-card">
-        <h2>Cumplimiento acumulado anual por provincia</h2>
+        <h2 id="tituloChartProvincia">Cumplimiento por provincia</h2>
         <div class="chart-box"><canvas id="chartProvincia"></canvas></div>
       </section>
       <section class="card chart-card">
-        <h2>Cumplimiento acumulado anual por marca</h2>
+        <h2 id="tituloChartMarca">Cumplimiento por marca</h2>
         <div class="chart-box"><canvas id="chartMarca"></canvas></div>
       </section>
       <section class="card chart-card">
-        <h2>Top 10 — peor cumplimiento</h2>
+        <h2 id="tituloChartPeores">Top 10 — peor cumplimiento</h2>
         <div class="chart-box"><canvas id="chartPeores"></canvas></div>
       </section>
       <section class="card chart-card">
-        <h2>Distribución de estados</h2>
+        <h2 id="tituloChartEstados">Distribución de estados</h2>
         <div class="chart-box"><canvas id="chartEstados"></canvas></div>
       </section>
       <section class="card chart-card" style="grid-column: 1 / -1;">
-        <h2>Evolución del cumplimiento general (últimas 12 semanas)</h2>
+        <h2 id="tituloChartEvolucion">Evolución del cumplimiento general</h2>
         <div class="chart-box chart-box-wide"><canvas id="chartEvolucion"></canvas></div>
       </section>
     </div>

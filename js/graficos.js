@@ -34,12 +34,22 @@ function kpiCard(label, valor, clase) {
   return `<div class="kpi-card ${clase || ""}"><div class="kpi-label">${label}</div><div class="kpi-value">${valor}</div></div>`;
 }
 
-function renderKpisGraficos(filasReporte) {
+function rangoFechasGraficos() {
+  const hoy = hoyKey();
+  const desdeInput = document.getElementById("graficosDesde")?.value;
+  const hastaInput = document.getElementById("graficosHasta")?.value;
+  return {
+    desde: desdeInput || inicioAnio(hoy),
+    hasta: hastaInput || hoy,
+  };
+}
+
+function renderKpisGraficos(filasReporte, resultadosRango) {
   const cont = document.getElementById("kpisGraficos");
   if (!cont) return;
 
-  const total = RESULTADOS.length;
-  const ok = RESULTADOS.filter((r) => r.estado === "✅ OK").length;
+  const total = resultadosRango.length;
+  const ok = resultadosRango.filter((r) => r.estado === "✅ OK").length;
   const incumplimientos = total - ok;
   const pctGeneral = total > 0 ? ((ok / total) * 100).toFixed(1) + "%" : "—";
 
@@ -61,18 +71,28 @@ function renderGraficos() {
   if (!cont) return;
   const locales = State.getLocales();
   const fuentes = State.getFuentes();
-  const filasReporte = calcularReporte(locales, fuentes, RESULTADOS);
+  const { desde, hasta } = rangoFechasGraficos();
+  const etiquetaRango = `${desde} a ${hasta}`;
 
-  renderKpisGraficos(filasReporte);
+  document.getElementById("tituloChartProvincia").textContent = `Cumplimiento por provincia (${etiquetaRango})`;
+  document.getElementById("tituloChartMarca").textContent = `Cumplimiento por marca (${etiquetaRango})`;
+  document.getElementById("tituloChartPeores").textContent = `Top 10 — peor cumplimiento (${etiquetaRango})`;
+  document.getElementById("tituloChartEstados").textContent = `Distribución de estados (${etiquetaRango})`;
+  document.getElementById("tituloChartEvolucion").textContent = `Evolución del cumplimiento general (${etiquetaRango})`;
 
-  // 1. Cumplimiento acumulado anual por provincia
+  const filasReporte = calcularReporteRango(locales, fuentes, RESULTADOS, desde, hasta);
+  const resultadosRango = RESULTADOS.filter((r) => r.fechaKey && r.fechaKey >= desde && r.fechaKey <= hasta);
+
+  renderKpisGraficos(filasReporte, resultadosRango);
+
+  // 1. Cumplimiento por provincia
   const porProvincia = promedioPorCampo(filasReporte, "provincia");
   crearChart("chartProvincia", {
     type: "bar",
     data: {
       labels: porProvincia.map((p) => `${p.valor} (${p.n})`),
       datasets: [{
-        label: "% Cumplimiento acumulado anual",
+        label: "% Cumplimiento",
         data: porProvincia.map((p) => (p.pct * 100).toFixed(1)),
         backgroundColor: porProvincia.map((p) => colorPorPct(p.pct)),
       }],
@@ -91,7 +111,7 @@ function renderGraficos() {
     data: {
       labels: porMarca.map((p) => `${p.valor} (${p.n})`),
       datasets: [{
-        label: "% Cumplimiento acumulado anual",
+        label: "% Cumplimiento",
         data: porMarca.map((p) => (p.pct * 100).toFixed(1)),
         backgroundColor: porMarca.map((p) => colorPorPct(p.pct)),
       }],
@@ -112,7 +132,7 @@ function renderGraficos() {
     data: {
       labels: peores.map((f) => f.local.nombre),
       datasets: [{
-        label: "% Cumpl. acumulado anual",
+        label: "% Cumplimiento",
         data: peores.map((f) => (f.pctAnual * 100).toFixed(1)),
         backgroundColor: COLOR_NO,
       }],
@@ -125,7 +145,7 @@ function renderGraficos() {
   });
 
   // 4. Distribución de estados
-  const estados = distribucionEstados(RESULTADOS);
+  const estados = distribucionEstadosRango(RESULTADOS, desde, hasta);
   const entradas = Object.entries(estados).sort((a, b) => b[1] - a[1]);
   crearChart("chartEstados", {
     type: "doughnut",
@@ -141,8 +161,8 @@ function renderGraficos() {
     },
   });
 
-  // 5. Evolución semanal
-  const evolucion = evolucionSemanal(locales, fuentes, RESULTADOS, 12);
+  // 5. Evolución semanal dentro del rango elegido
+  const evolucion = evolucionSemanalRango(locales, fuentes, RESULTADOS, desde, hasta);
   crearChart("chartEvolucion", {
     type: "line",
     data: {

@@ -75,7 +75,10 @@ function exportarTablaExcel(idContenedor, nombreArchivo) {
     alert("No hay datos para exportar todavía.");
     return;
   }
-  const hoja = XLSX.utils.table_to_sheet(tabla);
+  // raw: true evita que SheetJS intente "adivinar" fechas/números a partir del
+  // texto de la tabla (mal interpretaba fechas como "2/07/2026" y las convertía
+  // a un serial de Excel incorrecto, mostrando años como 2001).
+  const hoja = XLSX.utils.table_to_sheet(tabla, { raw: true });
   const libro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(libro, hoja, "Datos");
   XLSX.writeFile(libro, nombreArchivo);
@@ -736,6 +739,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btnExportarReporte").addEventListener("click", () => exportarTablaExcel("tablaReporte", "reporte.xlsx"));
   document.getElementById("btnExportarMetricas").addEventListener("click", () => exportarTablaExcel("tablaMetricas", "metricas.xlsx"));
   document.getElementById("btnExportarRespuestas").addEventListener("click", () => exportarTablaExcel("tablaRespuestas", "respuestas.xlsx"));
+
+  document.getElementById("aplicarFiltrosGraficos").addEventListener("click", renderGraficos);
+  document.getElementById("btnGraficosAnio").addEventListener("click", () => {
+    document.getElementById("graficosDesde").value = "";
+    document.getElementById("graficosHasta").value = "";
+    renderGraficos();
+  });
 
   if (State.getFuentes().length) fetchYProcesar();
 });

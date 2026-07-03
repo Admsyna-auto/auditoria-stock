@@ -190,3 +190,51 @@ function evolucionSemanal(locales, fuentes, resultados, nSemanas) {
     return { semana: desde, pct: total > 0 ? ok / total : null };
   });
 }
+
+/**
+ * Igual que calcularReporte pero para un rango de fechas arbitrario en vez
+ * de semana/mes/año fijos. Devuelve pctAnual = % del rango, para poder
+ * reusar promedioPorCampo() y el resto de los gráficos sin duplicar lógica.
+ */
+function calcularReporteRango(locales, fuentes, resultados, desdeKey, hastaKey) {
+  const okSet = construirOkSet(resultados);
+  return locales.map((local) => {
+    const diasConControl = new Set(calendarioParaLocal(local, fuentes).map((c) => Number(c.dia_semana)));
+    const r = calcularCumplimiento(local.codigo, okSet, desdeKey, hastaKey, diasConControl);
+    return { local, pctAnual: r.pct, ok: r.ok, total: r.total };
+  });
+}
+
+function distribucionEstadosRango(resultados, desdeKey, hastaKey) {
+  const filtrados = resultados.filter((r) => r.fechaKey && r.fechaKey >= desdeKey && r.fechaKey <= hastaKey);
+  return distribucionEstados(filtrados);
+}
+
+/**
+ * % de cumplimiento general por semana, para todas las semanas dentro de
+ * [desdeKey, hastaKey].
+ */
+function evolucionSemanalRango(locales, fuentes, resultados, desdeKey, hastaKey) {
+  const okSet = construirOkSet(resultados);
+  const semanas = [];
+  let inicio = inicioSemana(desdeKey);
+  const finSemana = inicioSemana(hastaKey);
+  while (inicio <= finSemana) {
+    semanas.push(inicio);
+    inicio = sumarDias(inicio, 7);
+  }
+
+  return semanas.map((desde) => {
+    let hasta = sumarDias(desde, 6);
+    if (hasta > hastaKey) hasta = hastaKey;
+    let ok = 0;
+    let total = 0;
+    locales.forEach((local) => {
+      const diasConControl = new Set(calendarioParaLocal(local, fuentes).map((c) => Number(c.dia_semana)));
+      const r = calcularCumplimiento(local.codigo, okSet, desde, hasta, diasConControl);
+      ok += r.ok;
+      total += r.total;
+    });
+    return { semana: desde, pct: total > 0 ? ok / total : null };
+  });
+}
