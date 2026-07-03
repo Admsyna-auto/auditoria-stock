@@ -13,7 +13,7 @@
       "marca": "RIIING",
       "nombre": "SUC-101 RIIING LIBERTAD LUGONES 1",
       "provincia": "CÓRDOBA",
-      "responsable": "EVELYN FERNANDEZ",
+      "responsable": "LADY ORTIZ",
       "activo": true
     },
     {
@@ -37,7 +37,7 @@
       "marca": "RIIING",
       "nombre": "SUC-109 RIIING STAND PORTAL TUCUMAN",
       "provincia": "TUCUMAN",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "CLAUDIA SOLORZANO",
       "activo": true
     },
     {
@@ -133,7 +133,7 @@
       "marca": "RIIING",
       "nombre": "SUC-191 RIIING SAN MARTIN TUCUMAN",
       "provincia": "TUCUMAN",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "CLAUDIA SOLORZANO",
       "activo": true
     },
     {
@@ -157,7 +157,7 @@
       "marca": "RIIING",
       "nombre": "SUC-196 RIIING LOCAL CATAMARCA",
       "provincia": "CATAMARCA",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "AGUSTIN DIGDANIAN MALLOL",
       "activo": true
     },
     {
@@ -165,7 +165,7 @@
       "marca": "RIIING",
       "nombre": "SUC-198 RIIING LOCAL TUCUMAN MUÑECAS",
       "provincia": "TUCUMAN",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "CLAUDIA SOLORZANO",
       "activo": true
     },
     {
@@ -213,7 +213,7 @@
       "marca": "RIIING",
       "nombre": "SUC-205 RIIING WALMART TALLERES",
       "provincia": "CÓRDOBA",
-      "responsable": "LADY ORTIZ",
+      "responsable": "TOMAS VILLALON",
       "activo": true
     },
     {
@@ -221,7 +221,7 @@
       "marca": "RIIING",
       "nombre": "SUC-206 RIIING LIBERTAD LUGONES 2",
       "provincia": "CÓRDOBA",
-      "responsable": "EVELYN FERNANDEZ",
+      "responsable": "LADY ORTIZ",
       "activo": true
     },
     {
@@ -245,7 +245,7 @@
       "marca": "RIIING",
       "nombre": "SUC-210 RIIING LOCAL SM JOCKEY",
       "provincia": "CÓRDOBA",
-      "responsable": "EVELYN FERNANDEZ",
+      "responsable": "TOMAS VILLALON",
       "activo": true
     },
     {
@@ -293,7 +293,7 @@
       "marca": "RIIING",
       "nombre": "SUC-217 RIIING PORTAL TUCUMAN",
       "provincia": "TUCUMAN",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "CLAUDIA SOLORZANO",
       "activo": true
     },
     {
@@ -341,7 +341,7 @@
       "marca": "RIIING",
       "nombre": "SUC-223 RIIING PASO DEL BOSQUE ROSARIO",
       "provincia": "SANTA FÉ",
-      "responsable": "NICOLAS LUZZI",
+      "responsable": "MAXIMILIANO MARTINEZ",
       "activo": true
     },
     {
@@ -349,7 +349,7 @@
       "marca": "RIIING",
       "nombre": "SUC-224 RIIING ALTO ROSARIO",
       "provincia": "SANTA FÉ",
-      "responsable": "NICOLAS LUZZI",
+      "responsable": "MAXIMILIANO MARTINEZ",
       "activo": true
     },
     {
@@ -381,7 +381,7 @@
       "marca": "RIIING",
       "nombre": "SUC-235 RIIING LOCAL ALTO PALERMO",
       "provincia": "BUENOS AIRES",
-      "responsable": "MATIAS JUAREZ",
+      "responsable": "ALBA VAZQUEZ",
       "activo": true
     },
     {
@@ -421,7 +421,7 @@
       "marca": "RIIING",
       "nombre": "SUC-247 RIIING LOCAL LA RIOJA",
       "provincia": "LA RIOJA",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "AGUSTIN DIGDANIAN MALLOL",
       "activo": true
     },
     {
@@ -446,14 +446,14 @@
       "nombre": "SUC-523 RIIING LOCAL BSAS SAN JUSTO SHOP",
       "provincia": "BUENOS AIRES",
       "responsable": "ALBA VAZQUEZ",
-      "activo": true
+      "activo": false
     },
     {
       "codigo": "SUC-524",
       "marca": "RIIING",
       "nombre": "SUC-524 RIIING LOCAL PORTAL ROSARIO",
       "provincia": "SANTA FÉ",
-      "responsable": "NICOLAS LUZZI",
+      "responsable": "MAXIMILIANO MARTINEZ",
       "activo": true
     },
     {
@@ -461,7 +461,7 @@
       "marca": "RIIING",
       "nombre": "SUC-525 RIIING LOCAL BS AS PORTAL SM P OESTE",
       "provincia": "BUENOS AIRES",
-      "responsable": "ALBA VAZQUEZ",
+      "responsable": "MATIAS JUAREZ",
       "activo": true
     },
     {
@@ -469,15 +469,15 @@
       "marca": "RIIING",
       "nombre": "SUC-526 RIIING LOCAL BS AS PORTAL BROWN",
       "provincia": "BUENOS AIRES",
-      "responsable": "ALBA VAZQUEZ",
+      "responsable": "LEANDRO SALERNO",
       "activo": true
     },
     {
       "codigo": "SUC-530",
-      "marca": "",
+      "marca": "RIIING",
       "nombre": "SUC-530 RIING LOCAL LIBERTAD ROSARIO",
       "provincia": "SANTA FÉ",
-      "responsable": "NICOLAS LUZZI",
+      "responsable": "MAXIMILIANO MARTINEZ",
       "activo": true
     },
     {
@@ -501,7 +501,7 @@
       "marca": "RIIING",
       "nombre": "SUC-534 RIIING LOCAL SM BS AS TOM",
       "provincia": "BUENOS AIRES",
-      "responsable": "ALBA VAZQUEZ",
+      "responsable": "MATIAS JUAREZ",
       "activo": true
     },
     {
@@ -509,7 +509,7 @@
       "marca": "RIIING",
       "nombre": "SUC-537 RIIING LOCAL CATAMARCA 2",
       "provincia": "CATAMARCA",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "AGUSTIN DIGDANIAN MALLOL",
       "activo": true
     },
     {
@@ -533,7 +533,7 @@
       "marca": "DIGGIT",
       "nombre": "SUC-543 DIGGIT STAND SFE ALTO ROSARIO",
       "provincia": "SANTA FÉ",
-      "responsable": "NICOLAS LUZZI",
+      "responsable": "MAXIMILIANO MARTINEZ",
       "activo": true
     },
     {
@@ -541,7 +541,7 @@
       "marca": "DIGGIT",
       "nombre": "SUC-544 DIGGIT LOCAL CABA DOT",
       "provincia": "BUENOS AIRES",
-      "responsable": "ALBA VAZQUEZ",
+      "responsable": "LEONARDO SALERNO",
       "activo": true
     },
     {
@@ -573,7 +573,7 @@
       "marca": "RIIING",
       "nombre": "SUC-552 RIIING STAND BS AS DOT BAIRES",
       "provincia": "BUENOS AIRES",
-      "responsable": "ALBA VAZQUEZ",
+      "responsable": "LEONARDO SALERNO",
       "activo": true
     },
     {
@@ -581,7 +581,7 @@
       "marca": "RIIING",
       "nombre": "SUC-554 RIIING LOCAL TUC PASEO DEL NORTE",
       "provincia": "TUCUMAN",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "CLAUDIA SOLORZANO",
       "activo": true
     },
     {
@@ -589,7 +589,7 @@
       "marca": "RIIING",
       "nombre": "SUC-555 RIIING STAND BS AS SOLEIL",
       "provincia": "BUENOS AIRES",
-      "responsable": "ALBA VAZQUEZ",
+      "responsable": "MATIAS JUAREZ",
       "activo": true
     },
     {
@@ -605,7 +605,7 @@
       "marca": "RIIING",
       "nombre": "SUC-557 RIIING LOCAL TUCUMAN MENDOZA",
       "provincia": "TUCUMAN",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "CLAUDIA SOLORZANO",
       "activo": true
     },
     {
@@ -629,7 +629,7 @@
       "marca": "RIIING",
       "nombre": "SUC-561 RIIING LOCAL STAFE ROS SAN MARTIN",
       "provincia": "SANTA FÉ",
-      "responsable": "NICOLAS LUZZI",
+      "responsable": "MAXIMILIANO MARTINEZ",
       "activo": true
     },
     {
@@ -669,7 +669,7 @@
       "marca": "DIGGIT",
       "nombre": "SUC-567 DIGGIT LOCAL LRA JOAQUIN GONZALEZ 126",
       "provincia": "LA RIOJA",
-      "responsable": "FACUNDO BARRIONUEVO",
+      "responsable": "AGUSTIN DIGDANIAN MALLOL",
       "activo": true
     },
     {
@@ -693,7 +693,7 @@
       "marca": "DIGGIT",
       "nombre": "SUC-573 DIGGIT LOCAL TFG SAN MARTIN 517",
       "provincia": "TIERRA DEL FUEGO",
-      "responsable": "MATIAS JUAREZ",
+      "responsable": "MAX CASAGRANDE",
       "activo": true
     },
     {
@@ -701,7 +701,7 @@
       "marca": "DIGGIT",
       "nombre": "SUC-575 DIGGIT LOCAL TFG ROSALES 343",
       "provincia": "TIERRA DEL FUEGO",
-      "responsable": "MATIAS JUAREZ",
+      "responsable": "MAX CASAGRANDE",
       "activo": true
     },
     {
@@ -718,14 +718,14 @@
       "nombre": "SUC-578 DIGGIT LOCAL BSA ITALIA 20",
       "provincia": "",
       "responsable": "",
-      "activo": true
+      "activo": false
     },
     {
       "codigo": "SUC-579",
       "marca": "DIGGIT",
       "nombre": "SUC-579 DIGGIT LOCAL CABA ABASTO N02L035",
       "provincia": "BUENOS AIRES",
-      "responsable": "MATIAS JUAREZ",
+      "responsable": "ALBA VAZQUEZ",
       "activo": true
     },
     {
@@ -734,7 +734,7 @@
       "nombre": "SUC-585 DIGGIT STAND BSA PLAZA OESTE L6203",
       "provincia": "BUENOS AIRES",
       "responsable": "ALBA VAZQUEZ",
-      "activo": true
+      "activo": false
     },
     {
       "codigo": "SUC-546",
@@ -771,9 +771,9 @@
     {
       "codigo": "SUC-558",
       "marca": "JBL",
-      "nombre": "SUC-558 JBL STAND BS AS BENDU ST02",
-      "provincia": "",
-      "responsable": "",
+      "nombre": "SUC-558 JBL DINO ALTO VERDE",
+      "provincia": "CÓRDOBA",
+      "responsable": "LADY ORTIZ",
       "activo": true
     },
     {
@@ -829,7 +829,7 @@
       "marca": "JBL",
       "nombre": "SUC-583 JBL STAND CABA DOT N01G004",
       "provincia": "BUENOS AIRES",
-      "responsable": "ALBA VAZQUEZ",
+      "responsable": "LEONARDO SALERNO",
       "activo": true
     },
     {
@@ -854,6 +854,30 @@
       "nombre": "SUC-588 JBL STAND BSA BENDU ST02",
       "provincia": "BUENOS AIRES",
       "responsable": "MAX CASAGRANDE",
+      "activo": true
+    },
+    {
+      "codigo": "SUC-194",
+      "marca": "RIIING",
+      "nombre": "SUC-194 RIIING LOCAL DINO ALTO VERDE",
+      "provincia": "",
+      "responsable": "",
+      "activo": true
+    },
+    {
+      "codigo": "SUC-520",
+      "marca": "RIIING",
+      "nombre": "SUC-520 RIIING LOCAL CBA RIO CUARTO",
+      "provincia": "",
+      "responsable": "",
+      "activo": true
+    },
+    {
+      "codigo": "SUC-577",
+      "marca": "DIGGIT",
+      "nombre": "SUC-577 DIGGIT LOCAL BSA MORENO 581",
+      "provincia": "",
+      "responsable": "",
       "activo": true
     }
   ],
@@ -884,6 +908,15 @@
           "tipo_esperado": "Relojes y Hydros"
         }
       ]
+    },
+    {
+      "id": "fuente-1783089585555",
+      "nombre": "JBL",
+      "csvUrl": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQiWGDFn_lzqQ2b3Hr7bbymtvNzBIyz2_C76i2nTxhytpw9iZJOs7dM1vlUKBzW6LSYBLU1PRu0sbTV/pub?gid=2058691952&single=true&output=csv",
+      "marcas": [
+        "JBL"
+      ],
+      "calendario": []
     }
   ],
   "config": {
