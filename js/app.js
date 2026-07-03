@@ -1,4 +1,5 @@
-let RESULTADOS = [];
+let RESULTADOS_BASE = []; // resultado automático, tal como lo calcula procesarRespuestas
+let RESULTADOS = []; // RESULTADOS_BASE + correcciones manuales aplicadas (esto es lo que se usa en toda la app)
 
 function diaLabel(n) {
   return ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][n - 1] || "";
@@ -16,6 +17,54 @@ function setEstadoCarga(texto) {
   const estadoGlobalEl = document.getElementById("estadoCargaGlobal");
   if (estadoEl) estadoEl.textContent = texto;
   if (estadoGlobalEl) estadoGlobalEl.textContent = texto;
+}
+
+/**
+ * Identifica una respuesta puntual del Form de forma estable entre
+ * re-descargas del CSV (mismo local + mismo timestamp + mismo tipo elegido).
+ */
+function claveRespuesta(r) {
+  return `${r.fuenteNombre || ""}|${r.sucursalRaw || ""}|${r.marcaTemporal || ""}|${r.tipoRaw || ""}`;
+}
+
+const ESTADOS_CORREGIBLES = [
+  "✅ OK",
+  "❌ Duplicado",
+  "❌ Fuera de horario",
+  "⚠️ Tipo incorrecto",
+  "⚠️ Carga múltiple en el mismo día",
+  "⚠️ Día sin control",
+];
+
+/**
+ * Aplica correcciones manuales guardadas (ej. al revisar cargas múltiples y
+ * elegir cuál archivo es el válido para ese día) sobre el resultado automático.
+ */
+function aplicarCorrecciones(resultados) {
+  const correcciones = State.getCorrecciones();
+  return resultados.map((r) => {
+    const correccion = correcciones[claveRespuesta(r)];
+    if (!correccion) return r;
+    return {
+      ...r,
+      estado: correccion.estado,
+      detalle: `${correccion.detalle || "Corregido manualmente"} (antes: ${r.estado})`,
+      corregidoManual: true,
+    };
+  });
+}
+
+function guardarCorreccion(r, nuevoEstado) {
+  const correcciones = State.getCorrecciones();
+  const clave = claveRespuesta(r);
+  if (!nuevoEstado) {
+    delete correcciones[clave];
+  } else {
+    correcciones[clave] = { estado: nuevoEstado, detalle: "Corregido manualmente", corregidoEn: new Date().toLocaleString("es-AR") };
+  }
+  State.setCorrecciones(correcciones);
+  RESULTADOS = aplicarCorrecciones(RESULTADOS_BASE);
+  renderTodo();
 }
 
 async function fetchYProcesar() {
@@ -51,7 +100,8 @@ async function fetchYProcesar() {
     }
   }
 
-  RESULTADOS = todas;
+  RESULTADOS_BASE = todas;
+  RESULTADOS = aplicarCorrecciones(RESULTADOS_BASE);
   const resumen = `${totalFilas} respuestas procesadas de ${fuentes.length} fuente(s) (${new Date().toLocaleTimeString("es-AR")}).`;
   setEstadoCarga(errores.length ? `${resumen} Errores: ${errores.join(" | ")}` : resumen);
   renderTodo();
@@ -113,7 +163,7 @@ function poblarFiltrosReporte(filas) {
 function renderReporte() {
   const cont = document.getElementById("tablaReporte");
   if (!cont) return;
-  const locales = State.getLocales();
+  const locales = State.getLocalesActivos();
   const fuentes = State.getFuentes();
   const filas = calcularReporte(locales, fuentes, RESULTADOS);
   poblarFiltrosReporte(filas);
@@ -154,7 +204,7 @@ function renderReporte() {
 function renderMetricas() {
   const cont = document.getElementById("tablaMetricas");
   if (!cont) return;
-  const locales = State.getLocales();
+  const locales = State.getLocalesActivos();
   const fuentes = State.getFuentes();
   const diasOrdenados = [
     ...new Set(fuentes.flatMap((f) => (f.calendario || []).map((c) => Number(c.dia_semana)))),
@@ -190,8 +240,14 @@ function renderMetricas() {
 
 function renderResumen() {
   const cont = document.getElementById("resumenEstados");
+  const codigosInactivos = new Set(
+    State.getLocales().filter((l) => l.activo === false).map((l) => claveLocal(l.codigo))
+  );
   const counts = {};
-  RESULTADOS.forEach((r) => (counts[r.estado] = (counts[r.estado] || 0) + 1));
+  RESULTADOS.forEach((r) => {
+    if (codigosInactivos.has(r.localCodigo)) return;
+    counts[r.estado] = (counts[r.estado] || 0) + 1;
+  });
   cont.innerHTML = Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .map(([estado, c]) => `<span class="chip">${estado}: <b>${c}</b></span>`)
@@ -229,7 +285,7 @@ function poblarFiltroTipoDashboard() {
 }
 
 function renderDashboard() {
-  const locales = State.getLocales();
+  const locales = State.getLocalesActivos();
   const fuentes = State.getFuentes();
 
   const desdeInput = document.getElementById("desde").value;
@@ -284,7 +340,11 @@ function renderRespuestas() {
   const filtroTexto = document.getElementById("filtroTexto").value.trim().toLowerCase();
   const filtroDesde = document.getElementById("respDesde").value;
   const filtroHasta = document.getElementById("respHasta").value;
+  const codigosInactivos = new Set(
+    State.getLocales().filter((l) => l.activo === false).map((l) => claveLocal(l.codigo))
+  );
   const filtradas = RESULTADOS.filter((r) => {
+    if (codigosInactivos.has(r.localCodigo)) return false;
     if (filtroEstado && r.estado !== filtroEstado) return false;
     if (filtroTexto && !(r.sucursalRaw || "").toLowerCase().includes(filtroTexto)) return false;
     if (filtroDesde && (!r.fechaKey || r.fechaKey < filtroDesde)) return false;
@@ -304,18 +364,30 @@ function renderRespuestas() {
   }
 
   let html =
-    "<table><thead><tr><th>Fecha</th><th>Fuente</th><th>Sucursal</th><th>Tipo seleccionado</th><th>Tipo esperado</th><th>Estado</th><th>Detalle</th><th>Archivo</th></tr></thead><tbody>";
+    "<table><thead><tr><th>Fecha</th><th>Fuente</th><th>Sucursal</th><th>Tipo seleccionado</th><th>Tipo esperado</th><th>Estado</th><th>Detalle</th><th>Archivo</th><th>Corrección manual</th></tr></thead><tbody>";
+  const filasHtml = [];
   filtradas
     .slice()
     .reverse()
-    .forEach((r) => {
+    .forEach((r, idx) => {
       const archivoHtml = r.archivo && r.archivo.startsWith("http")
         ? `<a href="${r.archivo}" target="_blank" rel="noopener">link</a>`
         : r.archivo || "";
-      html += `<tr><td>${r.marcaTemporal}</td><td>${r.fuenteNombre || ""}</td><td>${r.sucursalRaw}</td><td>${r.tipoNormalizado || r.tipoRaw}</td><td>${r.tipoEsperado || ""}</td><td>${r.estado}</td><td>${r.detalle}</td><td>${archivoHtml}</td></tr>`;
+      const opciones =
+        `<option value="">(automático)</option>` +
+        ESTADOS_CORREGIBLES.map((e) => `<option value="${e}" ${r.corregidoManual && r.estado === e ? "selected" : ""}>${e}</option>`).join("");
+      html += `<tr${r.corregidoManual ? ' style="background:#fff8e6"' : ""}><td>${r.marcaTemporal}</td><td>${r.fuenteNombre || ""}</td><td>${r.sucursalRaw}</td><td>${r.tipoNormalizado || r.tipoRaw}</td><td>${r.tipoEsperado || ""}</td><td>${r.estado}</td><td>${r.detalle}</td><td>${archivoHtml}</td><td><select data-idx="${idx}">${opciones}</select></td></tr>`;
+      filasHtml.push(r);
     });
   html += "</tbody></table>";
   document.getElementById("tablaRespuestas").innerHTML = html;
+
+  document.querySelectorAll("#tablaRespuestas select[data-idx]").forEach((sel) => {
+    sel.addEventListener("change", () => {
+      const r = filasHtml[Number(sel.dataset.idx)];
+      guardarCorreccion(r, sel.value || null);
+    });
+  });
 }
 
 function poblarFiltrosLocales(locales) {

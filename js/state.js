@@ -7,6 +7,7 @@ const LS_KEYS = {
   GITHUB_TOKEN: "as_github_token",
   GITHUB_REPO: "as_github_repo",
   ULTIMA_SYNC: "as_ultima_sync",
+  CORRECCIONES: "as_correcciones",
 };
 
 const DEFAULT_GITHUB_REPO = "Admsyna-auto/auditoria-stock";
@@ -68,6 +69,9 @@ const State = {
 
   getLocales: () => loadJSON(LS_KEYS.LOCALES, []),
   setLocales: (locales) => saveJSON(LS_KEYS.LOCALES, locales),
+  // Para las pestañas de reporte/compliance: solo locales activos. Locales,
+  // Config y la carga/validación de respuestas siguen usando getLocales() (todos).
+  getLocalesActivos: () => loadJSON(LS_KEYS.LOCALES, []).filter((l) => l.activo !== false),
 
   getConfig: () => Object.assign({}, DEFAULT_CONFIG, loadJSON(LS_KEYS.CONFIG, {})),
   setConfig: (cfg) => saveJSON(LS_KEYS.CONFIG, cfg),
@@ -83,4 +87,9 @@ const State = {
 
   getUltimaSync: () => localStorage.getItem(LS_KEYS.ULTIMA_SYNC) || "",
   setUltimaSync: (fecha) => localStorage.setItem(LS_KEYS.ULTIMA_SYNC, fecha),
+
+  // Correcciones manuales de estado por respuesta (ej. para elegir cuál de
+  // varias cargas múltiples es la válida). Mapa: claveRespuesta -> { estado, detalle, corregidoEn }.
+  getCorrecciones: () => loadJSON(LS_KEYS.CORRECCIONES, {}),
+  setCorrecciones: (correcciones) => saveJSON(LS_KEYS.CORRECCIONES, correcciones),
 };

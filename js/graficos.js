@@ -69,7 +69,7 @@ function renderKpisGraficos(filasReporte, resultadosRango) {
 function renderGraficos() {
   const cont = document.getElementById("tab-graficos");
   if (!cont) return;
-  const locales = State.getLocales();
+  const locales = State.getLocalesActivos();
   const fuentes = State.getFuentes();
   const { desde, hasta } = rangoFechasGraficos();
   const etiquetaRango = `${desde} a ${hasta}`;
@@ -80,8 +80,11 @@ function renderGraficos() {
   document.getElementById("tituloChartEstados").textContent = `Distribución de estados (${etiquetaRango})`;
   document.getElementById("tituloChartEvolucion").textContent = `Evolución del cumplimiento general (${etiquetaRango})`;
 
+  const codigosActivos = new Set(locales.map((l) => claveLocal(l.codigo)));
   const filasReporte = calcularReporteRango(locales, fuentes, RESULTADOS, desde, hasta);
-  const resultadosRango = RESULTADOS.filter((r) => r.fechaKey && r.fechaKey >= desde && r.fechaKey <= hasta);
+  const resultadosRango = RESULTADOS.filter(
+    (r) => r.fechaKey && r.fechaKey >= desde && r.fechaKey <= hasta && codigosActivos.has(r.localCodigo)
+  );
 
   renderKpisGraficos(filasReporte, resultadosRango);
 
@@ -145,7 +148,7 @@ function renderGraficos() {
   });
 
   // 4. Distribución de estados
-  const estados = distribucionEstadosRango(RESULTADOS, desde, hasta);
+  const estados = distribucionEstados(resultadosRango);
   const entradas = Object.entries(estados).sort((a, b) => b[1] - a[1]);
   crearChart("chartEstados", {
     type: "doughnut",
