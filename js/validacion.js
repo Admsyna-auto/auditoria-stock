@@ -122,3 +122,9 @@ function procesarRespuestas(rows, locales, calendario, config) {
 
   return resultados;
 }
+
+// Permite reusar esta misma lógica desde Node (script de reclamos por mail)
+// sin afectar el uso normal en el navegador vía <script>.
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { normalizeTipo, claveLocal, codigoDeSucursal, parseFechaForm, getExpectedType, procesarRespuestas };
+}

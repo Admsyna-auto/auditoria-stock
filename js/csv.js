@@ -51,3 +51,7 @@ function csvToObjects(text) {
     return obj;
   });
 }
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { parseCSV, csvToObjects };
+}

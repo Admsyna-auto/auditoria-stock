@@ -1,3 +1,4 @@
 js/locales_seed.js
 js/seed-data.js
 *.log
+node_modules/

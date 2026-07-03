@@ -1,0 +1,45 @@
+name: Enviar reclamos diarios
+
+on:
+  schedule:
+    # 23:35 hora Argentina (UTC-3, fija todo el año) = 02:35 UTC del día siguiente
+    - cron: "35 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Solo simular (no enviar mails ni loguear)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  reclamos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm install nodemailer --no-save
+
+      - name: Ejecutar revisión y envío de reclamos
+        run: node scripts/reclamos.cjs
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          LOCALES_EMAILS_JSON: ${{ secrets.LOCALES_EMAILS_JSON }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+      - name: Commitear log de reclamos enviados
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/reclamos-log.json
+          git diff --cached --quiet || git commit -m "Actualiza log de reclamos enviados"
+          git push
